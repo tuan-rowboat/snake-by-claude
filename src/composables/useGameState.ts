@@ -11,13 +11,16 @@ export function useGameState() {
     snake2: [{ x: 8, y: 8 }],
     foods: [{ x: 15, y: 15, type: 'apple' }],
     walls: [],
+    bullets: [],
     direction: { x: 1, y: 0 },
     direction2: { x: 1, y: 0 },
     score: 0,
     score2: 0,
     winner: null,
     teleportCooldown: 0,
-    teleportCooldown2: 0
+    teleportCooldown2: 0,
+    bulletCount: 0,
+    bulletCount2: 0
   })
 
   const isGameActive = computed(() => 
@@ -36,13 +39,16 @@ export function useGameState() {
       snake2: [{ x: 8, y: 8 }],
       foods: [{ x: 15, y: 15, type: 'apple' }],
       walls: [],
+      bullets: [],
       direction: { x: 1, y: 0 },
       direction2: { x: 1, y: 0 },
       score: 0,
       score2: 0,
       winner: null,
       teleportCooldown: 0,
-      teleportCooldown2: 0
+      teleportCooldown2: 0,
+      bulletCount: 0,
+      bulletCount2: 0
     }
   }
 

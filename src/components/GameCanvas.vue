@@ -2,16 +2,19 @@
   <div class="flex flex-col items-center">
     <div v-if="gameMode === 'single'" class="mb-4 flex gap-8 items-center">
       <div class="text-xl font-bold">Score: <span class="text-green-400 text-2xl">{{ score }}</span></div>
+      <div v-if="bulletCount && bulletCount > 0" class="text-lg font-bold text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }} (Press S to shoot)</div>
       <div class="text-sm opacity-75 animate-pulse">Press SPACE to {{ gameState === 'playing' ? 'Pause' : 'Resume' }}</div>
     </div>
     
     <div v-if="gameMode === 'multiplayer'" class="mb-4 flex gap-8 items-center">
       <div class="text-lg font-bold">
         Player 1: <span class="text-green-400 text-xl">{{ score }}</span>
+        <div v-if="bulletCount && bulletCount > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }}</div>
       </div>
       <div class="text-sm opacity-75 animate-pulse">Press SPACE to {{ gameState === 'playing' ? 'Pause' : 'Resume' }}</div>
       <div class="text-lg font-bold">
         Player 2: <span class="text-blue-400 text-xl">{{ score2 }}</span>
+        <div v-if="bulletCount2 && bulletCount2 > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount2 }}</div>
       </div>
     </div>
 
@@ -71,7 +74,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, type Ref } from 'vue'
-import type { Position, Food, GameState, GameMode, Direction, GameSettings } from '../types/game'
+import type { Position, Food, Bullet, GameState, GameMode, Direction, GameSettings } from '../types/game'
 import { GAME_WIDTH, GAME_HEIGHT, FOOD_TYPES } from '../utils/constants'
 import { drawShape, drawSnakeEyes, drawGrid, drawWalls, drawPauseOverlay } from '../utils/drawing'
 
@@ -82,6 +85,7 @@ interface Props {
   snake2: Position[]
   foods: Food[]
   walls: Position[]
+  bullets: Bullet[]
   direction: Direction
   direction2: Direction
   score: number
@@ -89,6 +93,8 @@ interface Props {
   settings: GameSettings
   teleportCooldown?: number
   teleportCooldown2?: number
+  bulletCount?: number
+  bulletCount2?: number
 }
 
 const props = defineProps<Props>()
@@ -157,6 +163,25 @@ const draw = (): void => {
     })
   }
   
+  // Draw bullets
+  props.bullets.forEach(bullet => {
+    const bulletColor = bullet.playerId === 1 ? '#ff6600' : '#ff0088'
+    ctx.fillStyle = bulletColor
+    ctx.fillRect(bullet.x * 25 + 8, bullet.y * 25 + 8, 9, 9)
+    
+    // Add glow effect
+    ctx.shadowColor = bulletColor
+    ctx.shadowBlur = 10
+    ctx.fillRect(bullet.x * 25 + 8, bullet.y * 25 + 8, 9, 9)
+    ctx.shadowBlur = 0
+    
+    // Draw bullet emoji
+    ctx.font = '12px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText('●', bullet.x * 25 + 12, bullet.y * 25 + 16)
+  })
+  
   // Draw pause overlay
   if (props.gameState === 'paused') {
     drawPauseOverlay(ctx)
@@ -164,7 +189,7 @@ const draw = (): void => {
 }
 
 // Watch for prop changes to redraw
-watch(() => [props.snake, props.snake2, props.foods, props.walls, props.gameState], draw, { deep: true })
+watch(() => [props.snake, props.snake2, props.foods, props.walls, props.bullets, props.gameState], draw, { deep: true })
 
 onMounted(() => {
   draw()

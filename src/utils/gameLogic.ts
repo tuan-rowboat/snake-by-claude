@@ -1,4 +1,4 @@
-import type { Position, Direction, Food, FoodType } from '../types/game'
+import type { Position, Direction, Food, FoodType, Bullet } from '../types/game'
 import { GRID_SIZE, FOOD_TYPES } from './constants'
 
 export const generateRandomWalls = (count: number = 15): Position[] => {
@@ -237,7 +237,7 @@ export const updateSnakeWithFood = (
   snake: Position[], 
   foodType: FoodType, 
   points: number
-): { newSnake: Position[], scoreChange: number } => {
+): { newSnake: Position[], scoreChange: number, bulletCount: number } => {
   const newSnake = [...snake]
   const foodProps = FOOD_TYPES[foodType]
   
@@ -248,14 +248,19 @@ export const updateSnakeWithFood = (
       const lastSegment = newSnake[newSnake.length - 1]
       newSnake.push({ ...lastSegment })
     }
-    return { newSnake, scoreChange: points }
+    return { newSnake, scoreChange: points, bulletCount: 0 }
   } else if (foodProps.effect === 'shrink') {
     // Reduce snake length by 2 (poison effect)
     if (newSnake.length > 3) { // Keep minimum length of 3
       newSnake.pop()
       newSnake.pop()
     }
-    return { newSnake, scoreChange: points }
+    return { newSnake, scoreChange: points, bulletCount: 0 }
+  } else if (foodProps.effect === 'bullet') {
+    // Bullet food - grants 5 bullets
+    const lastSegment = newSnake[newSnake.length - 1]
+    newSnake.push({ ...lastSegment })
+    return { newSnake, scoreChange: points, bulletCount: 5 }
   } else {
     // Normal food - grow snake by adding a segment
     const lastSegment = newSnake[newSnake.length - 1]
@@ -264,10 +269,10 @@ export const updateSnakeWithFood = (
     // Golden apple grows by 2 segments
     if (foodType === 'golden') {
       newSnake.push({ ...lastSegment })
-      return { newSnake, scoreChange: points * 2 } // Double points for golden apple
+      return { newSnake, scoreChange: points * 2, bulletCount: 0 } // Double points for golden apple
     }
     
-    return { newSnake, scoreChange: points }
+    return { newSnake, scoreChange: points, bulletCount: 0 }
   }
 }
 
@@ -400,4 +405,83 @@ export const executeDirectionalTeleport = (
   
   // Fallback to original position if no valid teleport found
   return head
+}
+
+export const createBullet = (snakeHead: Position, direction: Direction, playerId: 1 | 2): Bullet => {
+  return {
+    x: snakeHead.x + direction.x,
+    y: snakeHead.y + direction.y,
+    direction,
+    playerId
+  }
+}
+
+export const moveBullets = (bullets: Bullet[]): Bullet[] => {
+  return bullets
+    .map(bullet => ({
+      ...bullet,
+      x: bullet.x + bullet.direction.x,
+      y: bullet.y + bullet.direction.y
+    }))
+    .filter(bullet => 
+      bullet.x >= 0 && bullet.x < GRID_SIZE && 
+      bullet.y >= 0 && bullet.y < GRID_SIZE
+    )
+}
+
+export const checkBulletWallCollisions = (bullets: Bullet[], walls: Position[]): { 
+  remainingBullets: Bullet[], 
+  destroyedWalls: Position[] 
+} => {
+  const remainingBullets: Bullet[] = []
+  const destroyedWalls: Position[] = []
+  const remainingWalls = [...walls]
+
+  for (const bullet of bullets) {
+    const wallIndex = remainingWalls.findIndex(wall => wall.x === bullet.x && wall.y === bullet.y)
+    
+    if (wallIndex !== -1) {
+      // Bullet hits wall - destroy the wall and the bullet
+      destroyedWalls.push(remainingWalls[wallIndex])
+      remainingWalls.splice(wallIndex, 1)
+    } else {
+      // Bullet doesn't hit wall - keep it
+      remainingBullets.push(bullet)
+    }
+  }
+
+  return { remainingBullets, destroyedWalls }
+}
+
+export const checkBulletSnakeCollisions = (bullets: Bullet[], snake: Position[], otherSnake: Position[] = []): {
+  remainingBullets: Bullet[],
+  snakeHit: boolean,
+  otherSnakeHit: boolean
+} => {
+  const remainingBullets: Bullet[] = []
+  let snakeHit = false
+  let otherSnakeHit = false
+
+  for (const bullet of bullets) {
+    let hitSomething = false
+    
+    // Check collision with main snake
+    if (snake.some(segment => segment.x === bullet.x && segment.y === bullet.y)) {
+      snakeHit = true
+      hitSomething = true
+    }
+    
+    // Check collision with other snake
+    if (otherSnake.some(segment => segment.x === bullet.x && segment.y === bullet.y)) {
+      otherSnakeHit = true
+      hitSomething = true
+    }
+    
+    // Only keep bullet if it didn't hit anything
+    if (!hitSomething) {
+      remainingBullets.push(bullet)
+    }
+  }
+
+  return { remainingBullets, snakeHit, otherSnakeHit }
 }

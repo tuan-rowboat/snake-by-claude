@@ -8,16 +8,16 @@ export const GAME_HEIGHT: number = GRID_SIZE * CELL_SIZE
 
 // Food types with their properties
 export const FOOD_TYPES: Record<FoodType, FoodProperties> = {
-  apple: { color: '#ff0000', points: 10, spawnRate: 0.25, shape: 'circle', emoji: '🍎' },
-  golden: { color: '#ffd700', points: 50, spawnRate: 0.08, shape: 'star', emoji: '⭐' },
+  apple: { color: '#ff0000', points: 10, spawnRate: 0.30, shape: 'circle', emoji: '🍎' },
+  golden: { color: '#ffd700', points: 50, spawnRate: 0.06, shape: 'star', emoji: '⭐' },
   berry: { color: '#9932cc', points: 20, spawnRate: 0.15, shape: 'circle', emoji: '🫐' },
-  super: { color: '#ff69b4', points: 100, spawnRate: 0.04, shape: 'diamond', emoji: '💎' },
-  banana: { color: '#ffe135', points: 15, spawnRate: 0.13, shape: 'rectangle', emoji: '🍌' },
-  cherry: { color: '#dc143c', points: 25, spawnRate: 0.1, shape: 'circle', emoji: '🍒' },
-  watermelon: { color: '#fc6c85', points: 30, spawnRate: 0.07, shape: 'triangle', emoji: '🍉' },
-  mushroom: { color: '#00ff00', points: 5, spawnRate: 0.08, shape: 'circle', emoji: '🍄', effect: 'double' },
-  poison: { color: '#8b008b', points: -10, spawnRate: 0.1, shape: 'triangle', emoji: '☠️', effect: 'shrink' },
-  bullet: { color: '#ff6600', points: 20, spawnRate: 0.05, shape: 'diamond', emoji: '🔥', effect: 'bullet' }
+  super: { color: '#ff69b4', points: 100, spawnRate: 0.03, shape: 'diamond', emoji: '💎' },
+  banana: { color: '#ffe135', points: 15, spawnRate: 0.12, shape: 'rectangle', emoji: '🍌' },
+  cherry: { color: '#dc143c', points: 25, spawnRate: 0.10, shape: 'circle', emoji: '🍒' },
+  watermelon: { color: '#fc6c85', points: 30, spawnRate: 0.06, shape: 'triangle', emoji: '🍉' },
+  mushroom: { color: '#00ff00', points: 5, spawnRate: 0.06, shape: 'circle', emoji: '🍄', effect: 'double' },
+  poison: { color: '#8b008b', points: -10, spawnRate: 0.06, shape: 'triangle', emoji: '☠️', effect: 'shrink' },
+  bullet: { color: '#ff6600', points: 20, spawnRate: 1, shape: 'diamond', emoji: '🔥', effect: 'bullet' }
 }
 
 // Wall patterns

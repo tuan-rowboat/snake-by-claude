@@ -25,6 +25,7 @@
       :snake2="gameProgress.snake2"
       :foods="gameProgress.foods"
       :walls="gameProgress.walls"
+      :bullets="gameProgress.bullets"
       :direction="gameProgress.direction"
       :direction2="gameProgress.direction2"
       :score="gameProgress.score"
@@ -32,6 +33,8 @@
       :settings="settings"
       :teleport-cooldown="gameProgress.teleportCooldown"
       :teleport-cooldown2="gameProgress.teleportCooldown2"
+      :bullet-count="gameProgress.bulletCount"
+      :bullet-count2="gameProgress.bulletCount2"
     />
     
     <!-- Game Over Screen -->
@@ -53,7 +56,7 @@
 import { ref, onMounted, onUnmounted, watch, computed, type Ref } from 'vue'
 import type { GameState, GameMode, GameSettings, GameProgress, Position, Direction, Food } from './types/game'
 import { SPEEDS, WALL_PATTERNS, FOOD_TYPES, TELEPORT_COOLDOWN } from './utils/constants'
-import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport } from './utils/gameLogic'
+import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions } from './utils/gameLogic'
 import { loadHighScores, updateHighScores } from './utils/storage'
 import GameMenu from './components/GameMenu.vue'
 import GameCanvas from './components/GameCanvas.vue'
@@ -79,13 +82,16 @@ const gameProgress: Ref<GameProgress> = ref({
   snake2: [{ x: 8, y: 8 }],
   foods: [{ x: 15, y: 15, type: 'apple' }],
   walls: [],
+  bullets: [],
   direction: { x: 1, y: 0 },
   direction2: { x: 1, y: 0 },
   score: 0,
   score2: 0,
   winner: null,
   teleportCooldown: 0,
-  teleportCooldown2: 0
+  teleportCooldown2: 0,
+  bulletCount: 0,
+  bulletCount2: 0
 })
 
 const highScores: Ref<number[]> = ref([])
@@ -135,6 +141,11 @@ const startGame = (): void => {
   // Reset teleport cooldowns
   gameProgress.value.teleportCooldown = 0
   gameProgress.value.teleportCooldown2 = 0
+  
+  // Reset bullet counts and bullets
+  gameProgress.value.bulletCount = 0
+  gameProgress.value.bulletCount2 = 0
+  gameProgress.value.bullets = []
   
   // Set walls based on pattern
   let newWalls: Position[] = []
@@ -192,6 +203,54 @@ const setupMovingWallsTimer = (): void => {
 const gameLoop = (): void => {
   if (gameState.value !== 'playing') return
 
+  // Move bullets
+  gameProgress.value.bullets = moveBullets(gameProgress.value.bullets)
+  
+  // Check bullet-wall collisions
+  const { remainingBullets, destroyedWalls } = checkBulletWallCollisions(gameProgress.value.bullets, gameProgress.value.walls)
+  gameProgress.value.bullets = remainingBullets
+  
+  // Remove destroyed walls
+  if (destroyedWalls.length > 0) {
+    gameProgress.value.walls = gameProgress.value.walls.filter(wall => 
+      !destroyedWalls.some(destroyed => destroyed.x === wall.x && destroyed.y === wall.y)
+    )
+  }
+  
+  // Check bullet-snake collisions
+  if (gameMode.value === 'single') {
+    const { remainingBullets: bulletsAfterSnakeCheck, snakeHit } = checkBulletSnakeCollisions(
+      gameProgress.value.bullets, 
+      gameProgress.value.snake
+    )
+    gameProgress.value.bullets = bulletsAfterSnakeCheck
+    
+    if (snakeHit) {
+      gameState.value = 'gameOver'
+      return
+    }
+  } else {
+    // Multiplayer - check both snakes
+    const { remainingBullets: bulletsAfterSnakeCheck, snakeHit, otherSnakeHit } = checkBulletSnakeCollisions(
+      gameProgress.value.bullets, 
+      gameProgress.value.snake,
+      gameProgress.value.snake2
+    )
+    gameProgress.value.bullets = bulletsAfterSnakeCheck
+    
+    if (snakeHit || otherSnakeHit) {
+      if (snakeHit && otherSnakeHit) {
+        gameProgress.value.winner = 'tie'
+      } else if (snakeHit) {
+        gameProgress.value.winner = 'player2'
+      } else {
+        gameProgress.value.winner = 'player1'
+      }
+      gameState.value = 'gameOver'
+      return
+    }
+  }
+
   // Update teleport cooldowns
   if (gameProgress.value.teleportCooldown > 0) {
     gameProgress.value.teleportCooldown -= SPEEDS[settings.value.speed]
@@ -217,10 +276,15 @@ const gameLoop = (): void => {
     const eatenFoodIndex = gameProgress.value.foods.findIndex(food => food.x === head.x && food.y === head.y)
     if (eatenFoodIndex !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex]
-      const { newSnake: updatedSnake, scoreChange } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       gameProgress.value.snake = updatedSnake
       gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
+      
+      // Add bullets if bullet food was eaten
+      if (bulletCount > 0) {
+        gameProgress.value.bulletCount += bulletCount
+      }
       
       // Remove eaten food and generate new one
       const newFoods = gameProgress.value.foods.filter((_, index) => index !== eatenFoodIndex)
@@ -282,9 +346,15 @@ const gameLoop = (): void => {
     
     if (eatenFoodIndex1 !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex1]
-      const { newSnake: updatedSnake, scoreChange } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       gameProgress.value.snake = updatedSnake
       gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
+      
+      // Add bullets if bullet food was eaten
+      if (bulletCount > 0) {
+        gameProgress.value.bulletCount += bulletCount
+      }
+      
       foodsToRemove.push(eatenFoodIndex1)
     } else {
       newSnake1.pop()
@@ -293,9 +363,15 @@ const gameLoop = (): void => {
     
     if (eatenFoodIndex2 !== -1 && eatenFoodIndex2 !== eatenFoodIndex1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex2]
-      const { newSnake: updatedSnake, scoreChange } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       gameProgress.value.snake2 = updatedSnake
       gameProgress.value.score2 = Math.max(0, gameProgress.value.score2 + scoreChange)
+      
+      // Add bullets if bullet food was eaten
+      if (bulletCount > 0) {
+        gameProgress.value.bulletCount2 += bulletCount
+      }
+      
       foodsToRemove.push(eatenFoodIndex2)
     } else if (eatenFoodIndex2 === -1) {
       newSnake2.pop()
@@ -375,7 +451,16 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           break
         case 's':
         case 'S':
-          newDirection2 = { x: 0, y: 1 }
+          // Check if player 2 has bullets - if so, shoot bullet instead of moving
+          if (gameProgress.value.bulletCount2 > 0) {
+            const bullet = createBullet(gameProgress.value.snake2[0], gameProgress.value.direction2, 2)
+            gameProgress.value.bullets.push(bullet)
+            gameProgress.value.bulletCount2-- // Use up one bullet
+            e.preventDefault()
+            return
+          } else {
+            newDirection2 = { x: 0, y: 1 }
+          }
           break
         case 'a':
         case 'A':
@@ -399,7 +484,16 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           break
         case 's':
         case 'S':
-          newDirection = { x: 0, y: 1 }
+          // Check if snake has bullets - if so, shoot bullet instead of moving
+          if (gameProgress.value.bulletCount > 0) {
+            const bullet = createBullet(gameProgress.value.snake[0], gameProgress.value.direction, 1)
+            gameProgress.value.bullets.push(bullet)
+            gameProgress.value.bulletCount-- // Use up one bullet
+            e.preventDefault()
+            return
+          } else {
+            newDirection = { x: 0, y: 1 }
+          }
           break
         case 'a':
         case 'A':

@@ -67,6 +67,6 @@ export interface GameProgress {
   winner: Winner
   teleportCooldown: number
   teleportCooldown2: number
-  hasBulletAbility: boolean
-  hasBulletAbility2: boolean
+  bulletCount: number
+  bulletCount2: number
 }

@@ -224,6 +224,10 @@
           <span>☠️</span>
           <span class="text-purple-400">Poison: -2 Length! (-10 pts)</span>
         </div>
+        <div class="flex items-center gap-1 col-span-3">
+          <span>🔥</span>
+          <span class="text-orange-400">Bullet: 5 Shots! Press S to fire (+20 pts)</span>
+        </div>
       </div>
     </div>
     
