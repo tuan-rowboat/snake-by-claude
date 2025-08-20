@@ -49,18 +49,69 @@
       @restart-game="startGame"
       @return-to-menu="returnToMenu"
     />
+    
+    <!-- Progression Panel -->
+    <ProgressionPanel
+      v-if="showProgressPanel"
+      :player-level="progressionSystem.getPlayerLevel()"
+      :achievements="progressionSystem.getAchievements()"
+      :stats="progressionSystem.getPlayerStats()"
+      :todays-challenge="progressionSystem.getTodaysChallenge()"
+      :unlocked-skins="progressionData.unlockedSkins"
+      :unlocked-trails="progressionData.unlockedTrails"
+      :unlocked-colors="progressionData.unlockedColors"
+      :selected-skin="progressionData.selectedSkin"
+      :selected-trail="progressionData.selectedTrail"
+      @close="showProgressPanel = false"
+      @select-skin="selectSkin"
+      @select-trail="selectTrail"
+    />
+    
+    <!-- Level Up Notification -->
+    <LevelUpNotification
+      v-if="showLevelUpNotification"
+      :show="showLevelUpNotification"
+      :new-level="levelUpData.newLevel"
+      :experience-gained="levelUpData.experienceGained"
+      :unlocked-rewards="levelUpData.unlockedRewards"
+      @close="showLevelUpNotification = false"
+    />
+    
+    <!-- Achievement Notifications -->
+    <AchievementNotification
+      v-for="(achievement, index) in achievementNotifications"
+      :key="`achievement-${achievement.id}-${index}`"
+      :show="true"
+      :achievement="achievement"
+      @close="removeAchievementNotification(index)"
+      :style="{ top: `${4 + index * 6}rem` }"
+    />
+    
+    <!-- Progression Button -->
+    <button
+      v-if="gameState === 'menu'"
+      @click="showProgressPanel = true"
+      class="fixed top-4 right-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-600 transition transform hover:scale-105 shadow-lg"
+    >
+      📊 Progress
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, type Ref } from 'vue'
 import type { GameState, GameMode, GameSettings, GameProgress, Position, Direction, Food } from './types/game'
+import type { Achievement, UnlockableReward } from './types/progression'
 import { SPEEDS, WALL_PATTERNS, FOOD_TYPES, TELEPORT_COOLDOWN } from './utils/constants'
 import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions } from './utils/gameLogic'
 import { loadHighScores, updateHighScores } from './utils/storage'
+import { ProgressionSystem } from './utils/progressionSystem'
 import GameMenu from './components/GameMenu.vue'
 import GameCanvas from './components/GameCanvas.vue'
 import GameOver from './components/GameOver.vue'
+import ProgressionPanel from './components/ProgressionPanel.vue'
+import LevelUpNotification from './components/LevelUpNotification.vue'
+import AchievementNotification from './components/AchievementNotification.vue'
 
 // Reactive state
 const gameState: Ref<GameState> = ref('menu')
@@ -98,6 +149,25 @@ const gameProgress: Ref<GameProgress> = ref({
 const highScores: Ref<number[]> = ref([])
 const gameCanvasRef: Ref<typeof GameCanvas | null> = ref(null)
 
+// Progression System
+const progressionSystem = new ProgressionSystem()
+const progressionData = ref(progressionSystem.getData())
+const showProgressPanel = ref(false)
+const showLevelUpNotification = ref(false)
+const achievementNotifications: Ref<Achievement[]> = ref([])
+const levelUpData = ref({
+  newLevel: 1,
+  experienceGained: 0,
+  unlockedRewards: [] as UnlockableReward[]
+})
+
+// Game statistics tracking
+let gameStartTime = 0
+let foodsEatenThisGame = 0
+let wallsBrokenThisGame = 0
+let bulletsFiredThisGame = 0
+let teleportsUsedThisGame = 0
+
 // Game loop variables
 let gameLoopRef: number | null = null
 let animationId: number | null = null
@@ -119,7 +189,85 @@ const updateSettings = (key: keyof GameSettings, value: any): void => {
   (settings.value as any)[key] = value
 }
 
+// Progression System Methods
+const selectSkin = (skinId: string): void => {
+  progressionSystem.setSelected('skin', skinId)
+  progressionData.value = progressionSystem.getData()
+}
+
+const selectTrail = (trailId: string): void => {
+  progressionSystem.setSelected('trail', trailId)
+  progressionData.value = progressionSystem.getData()
+}
+
+const showAchievementNotification = (achievement: Achievement): void => {
+  achievementNotifications.value.push(achievement)
+}
+
+const removeAchievementNotification = (index: number): void => {
+  achievementNotifications.value.splice(index, 1)
+}
+
+const handleLevelUp = (newLevel: number, experienceGained: number): void => {
+  levelUpData.value = {
+    newLevel,
+    experienceGained,
+    unlockedRewards: [] // Will be populated by progression system
+  }
+  showLevelUpNotification.value = true
+}
+
+const handleGameEnd = (): void => {
+  const gameTime = Date.now() - gameStartTime
+  const finalScore = gameProgress.value.score
+  const snakeLength = gameProgress.value.snake.length
+  
+  // Record game statistics in progression system
+  progressionSystem.recordGameEnd(
+    finalScore,
+    gameTime,
+    foodsEatenThisGame,
+    wallsBrokenThisGame,
+    bulletsFiredThisGame,
+    teleportsUsedThisGame,
+    snakeLength,
+    gameMode.value
+  )
+  
+  // Check for achievements
+  const newAchievements = [
+    ...progressionSystem.updateAchievementProgress('score', finalScore),
+    ...progressionSystem.updateAchievementProgress('games_played', 1),
+    ...progressionSystem.updateAchievementProgress('foods_eaten', foodsEatenThisGame),
+    ...progressionSystem.updateAchievementProgress('walls_broken', wallsBrokenThisGame),
+    ...progressionSystem.updateAchievementProgress('survival_time', gameTime),
+    ...progressionSystem.updateAchievementProgress('bullet_master', bulletsFiredThisGame),
+    ...progressionSystem.updateAchievementProgress('teleport_expert', teleportsUsedThisGame)
+  ]
+  
+  // Show achievement notifications
+  newAchievements.forEach(achievement => {
+    showAchievementNotification(achievement)
+  })
+  
+  // Check for level up
+  const newLevelUpResult = progressionSystem.addExperience(0)
+  if (newLevelUpResult.leveledUp && newLevelUpResult.newLevel) {
+    handleLevelUp(newLevelUpResult.newLevel, 0)
+  }
+  
+  // Update progression data
+  progressionData.value = progressionSystem.getData()
+}
+
 const startGame = (): void => {
+  // Reset game statistics tracking
+  gameStartTime = Date.now()
+  foodsEatenThisGame = 0
+  wallsBrokenThisGame = 0
+  bulletsFiredThisGame = 0
+  teleportsUsedThisGame = 0
+  
   // Initialize player 1
   gameProgress.value.snake = [{ x: 10, y: 10 }]
   gameProgress.value.direction = { x: 1, y: 0 }
@@ -214,6 +362,7 @@ const gameLoop = (): void => {
   
   // Remove destroyed walls
   if (destroyedWalls.length > 0) {
+    wallsBrokenThisGame += destroyedWalls.length // Track walls broken
     gameProgress.value.walls = gameProgress.value.walls.filter(wall => 
       !destroyedWalls.some(destroyed => destroyed.x === wall.x && destroyed.y === wall.y)
     )
@@ -228,6 +377,8 @@ const gameLoop = (): void => {
     gameProgress.value.bullets = bulletsAfterSnakeCheck
     
     if (snakeHit) {
+      handleGameEnd()
+      handleGameEnd()
       gameState.value = 'gameOver'
       return
     }
@@ -248,6 +399,7 @@ const gameLoop = (): void => {
       } else {
         gameProgress.value.winner = 'player1'
       }
+      handleGameEnd()
       gameState.value = 'gameOver'
       return
     }
@@ -270,6 +422,7 @@ const gameLoop = (): void => {
     
     // Check collisions
     if (checkCollisions(head, gameProgress.value.snake, gameProgress.value.walls, [], settings.value.gridSize)) {
+      handleGameEnd()
       gameState.value = 'gameOver'
       return
     }
@@ -282,6 +435,9 @@ const gameLoop = (): void => {
       
       gameProgress.value.snake = updatedSnake
       gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
+      
+      // Track food eaten for progression
+      foodsEatenThisGame++
       
       // Add bullets if bullet food was eaten
       if (bulletCount > 0) {
@@ -338,6 +494,7 @@ const gameLoop = (): void => {
       } else {
         gameProgress.value.winner = 'player1'
       }
+      handleGameEnd()
       gameState.value = 'gameOver'
       return
     }
@@ -353,6 +510,9 @@ const gameLoop = (): void => {
       const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       gameProgress.value.snake = updatedSnake
       gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
+      
+      // Track food eaten for progression
+      foodsEatenThisGame++
       
       // Add bullets if bullet food was eaten
       if (bulletCount > 0) {
@@ -370,6 +530,9 @@ const gameLoop = (): void => {
       const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       gameProgress.value.snake2 = updatedSnake
       gameProgress.value.score2 = Math.max(0, gameProgress.value.score2 + scoreChange)
+      
+      // Track food eaten for progression
+      foodsEatenThisGame++
       
       // Add bullets if bullet food was eaten
       if (bulletCount > 0) {
@@ -462,6 +625,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             const bullet = createBullet(gameProgress.value.snake2[0], gameProgress.value.direction2, 2)
             gameProgress.value.bullets.push(bullet)
             gameProgress.value.bulletCount2-- // Use up one bullet
+            bulletsFiredThisGame++ // Track bullets fired
             e.preventDefault()
             return
           } else {
@@ -495,6 +659,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             const bullet = createBullet(gameProgress.value.snake[0], gameProgress.value.direction, 1)
             gameProgress.value.bullets.push(bullet)
             gameProgress.value.bulletCount-- // Use up one bullet
+            bulletsFiredThisGame++ // Track bullets fired
             e.preventDefault()
             return
           } else {
@@ -529,6 +694,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         )
         gameProgress.value.snake = newSnake
         gameProgress.value.teleportCooldown = TELEPORT_COOLDOWN
+        teleportsUsedThisGame++ // Track teleports used
         e.preventDefault()
       } else if ((e.key === 'r' || e.key === 'R') && gameProgress.value.teleportCooldown === 0) {
         // Directional teleport for player 1
@@ -541,6 +707,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         )
         gameProgress.value.snake[0] = teleportPosition
         gameProgress.value.teleportCooldown = TELEPORT_COOLDOWN
+        teleportsUsedThisGame++ // Track teleports used
         e.preventDefault()
       }
       
@@ -556,6 +723,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           )
           gameProgress.value.snake2 = newSnake2
           gameProgress.value.teleportCooldown2 = TELEPORT_COOLDOWN
+          teleportsUsedThisGame++ // Track teleports used
           e.preventDefault()
         } else if ((e.key === 'x' || e.key === 'X') && gameProgress.value.teleportCooldown2 === 0) {
           // Directional teleport for player 2
@@ -568,6 +736,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           )
           gameProgress.value.snake2[0] = teleportPosition
           gameProgress.value.teleportCooldown2 = TELEPORT_COOLDOWN
+          teleportsUsedThisGame++ // Track teleports used
           e.preventDefault()
         }
       }
