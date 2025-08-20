@@ -380,7 +380,7 @@
     </div>
     
     <!-- Progression Guide Modal -->
-    <div v-if="showGuide" class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50" @click.self="showGuide = false">
+    <div v-if="showGuide" class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 p-4" @click.self="showGuide = false">
       <ProgressionGuide
         :unlocked-skins="unlockedSkins"
         :unlocked-trails="unlockedTrails"

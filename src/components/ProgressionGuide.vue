@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gray-800 p-4 rounded-lg shadow-2xl max-w-4xl w-full">
+  <div class="bg-gray-800 p-4 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-bold">🎓 Progression Guide</h2>
       <button
@@ -11,7 +11,7 @@
     </div>
     
     <!-- Navigation Tabs -->
-    <div class="flex mb-4 bg-gray-700 rounded-lg p-1">
+    <div class="flex mb-4 bg-gray-700 rounded-lg p-1 flex-shrink-0">
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -27,8 +27,10 @@
       </button>
     </div>
 
-    <!-- How to Unlock Tab -->
-    <div v-if="activeTab === 'unlock'" class="space-y-6">
+    <!-- Content Container with Scrolling -->
+    <div class="flex-1 overflow-y-auto scrollbar-hide">
+      <!-- How to Unlock Tab -->
+      <div v-if="activeTab === 'unlock'" class="space-y-6 pb-4">
       <!-- Snake Skins -->
       <div class="bg-gray-700 p-4 rounded-lg">
         <h3 class="text-lg font-bold mb-3 flex items-center">
@@ -112,10 +114,10 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
 
-    <!-- Achievements Guide Tab -->
-    <div v-if="activeTab === 'achievements'" class="space-y-4">
+      <!-- Achievements Guide Tab -->
+      <div v-if="activeTab === 'achievements'" class="space-y-4 pb-4">
       <div class="bg-gray-700 p-4 rounded-lg">
         <h3 class="text-lg font-bold mb-3">🏆 Achievement Categories</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -151,10 +153,10 @@
           </li>
         </ul>
       </div>
-    </div>
+      </div>
 
-    <!-- Daily Challenges Tab -->
-    <div v-if="activeTab === 'challenges'" class="space-y-4">
+      <!-- Daily Challenges Tab -->
+      <div v-if="activeTab === 'challenges'" class="space-y-4 pb-4">
       <div class="bg-gradient-to-r from-purple-800 to-pink-800 p-4 rounded-lg">
         <h3 class="text-lg font-bold mb-3">🌟 Daily Challenge System</h3>
         <div class="text-sm space-y-2">
@@ -178,10 +180,10 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
 
-    <!-- Level System Tab -->
-    <div v-if="activeTab === 'levels'" class="space-y-4">
+      <!-- Level System Tab -->
+      <div v-if="activeTab === 'levels'" class="space-y-4 pb-4">
       <div class="bg-gradient-to-r from-blue-800 to-purple-800 p-4 rounded-lg">
         <h3 class="text-lg font-bold mb-3">📊 Experience & Leveling</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,6 +227,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -413,3 +416,15 @@ const levelRewards = [
   { level: 50, icon: '💫', reward: 'Neon Snake Skin' }
 ]
 </script>
+
+<style scoped>
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
+</style>
