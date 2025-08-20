@@ -53,24 +53,29 @@
       @return-to-menu="returnToMenu"
     />
     
-    <!-- Progression Panel -->
-    <ProgressionPanel
-      v-if="showProgressPanel"
-      :player-level="progressionSystem.getPlayerLevel()"
-      :achievements="progressionSystem.getAchievements()"
-      :stats="progressionSystem.getPlayerStats()"
-      :todays-challenge="progressionSystem.getTodaysChallenge()"
-      :this-weeks-challenge="progressionSystem.getThisWeeksChallenge()"
-      :unlocked-skins="progressionData.unlockedSkins"
-      :unlocked-trails="progressionData.unlockedTrails"
-      :unlocked-colors="progressionData.unlockedColors"
-      :unlocked-head-shapes="progressionData.unlockedHeadShapes"
-      :selected-skin="progressionData.selectedSkin"
-      :selected-trail="progressionData.selectedTrail"
-      @close="showProgressPanel = false"
-      @select-skin="selectSkin"
-      @select-trail="selectTrail"
-    />
+    <!-- Progression Panel Modal -->
+    <div 
+      v-if="showProgressPanel" 
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      @click.self="showProgressPanel = false"
+    >
+      <ProgressionPanel
+        :player-level="progressionSystem.getPlayerLevel()"
+        :achievements="progressionSystem.getAchievements()"
+        :stats="progressionSystem.getPlayerStats()"
+        :todays-challenge="progressionSystem.getTodaysChallenge()"
+        :this-weeks-challenge="progressionSystem.getThisWeeksChallenge()"
+        :unlocked-skins="progressionData.unlockedSkins"
+        :unlocked-trails="progressionData.unlockedTrails"
+        :unlocked-colors="progressionData.unlockedColors"
+        :unlocked-head-shapes="progressionData.unlockedHeadShapes"
+        :selected-skin="progressionData.selectedSkin"
+        :selected-trail="progressionData.selectedTrail"
+        @close="showProgressPanel = false"
+        @select-skin="selectSkin"
+        @select-trail="selectTrail"
+      />
+    </div>
     
     <!-- Level Up Notification -->
     <LevelUpNotification

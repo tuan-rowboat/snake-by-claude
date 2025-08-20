@@ -215,8 +215,38 @@
     </div>
     
     <!-- Active Challenges -->
-    <div v-if="todaysChallenge || thisWeeksChallenge || (activeSeasonalEvents && activeSeasonalEvents.length > 0)" class="mt-4 space-y-3">
-      <h3 class="text-lg font-bold text-center text-yellow-400">🌟 Active Challenges</h3>
+    <div v-if="todaysChallenge || thisWeeksChallenge || (activeSeasonalEvents && activeSeasonalEvents.length > 0)" class="mt-4">
+      <!-- Collapsible Header -->
+      <button
+        @click="toggleChallenges"
+        class="w-full flex items-center justify-between p-3 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 mb-3"
+      >
+        <h3 class="text-lg font-bold text-white">🌟 Active Challenges</h3>
+        <div class="flex items-center space-x-2">
+          <!-- Challenge Count Badge -->
+          <span class="bg-white bg-opacity-20 text-xs px-2 py-1 rounded-full">
+            {{ 
+              (todaysChallenge ? 1 : 0) + 
+              (thisWeeksChallenge ? 1 : 0) + 
+              (activeSeasonalEvents ? activeSeasonalEvents.length : 0)
+            }} active
+          </span>
+          <!-- Expand/Collapse Icon -->
+          <span 
+            class="transform transition-transform duration-200 text-white"
+            :class="challengesExpanded ? 'rotate-180' : 'rotate-0'"
+          >
+            ▼
+          </span>
+        </div>
+      </button>
+      
+      <!-- Collapsible Content -->
+      <div 
+        class="overflow-hidden transition-all duration-300 ease-in-out"
+        :class="challengesExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'"
+      >
+        <div class="space-y-3">
       
       <!-- Daily Challenge -->
       <div v-if="todaysChallenge" class="p-3 bg-gradient-to-r from-purple-800 to-pink-800 rounded-lg border border-purple-500">
@@ -290,6 +320,8 @@
           </div>
         </div>
       </div>
+        </div>
+      </div>
     </div>
     
     <!-- Progression Tip -->
@@ -357,6 +389,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { GameMode, GameSettings } from '../types/game'
 import type { DailyChallenge, WeeklyChallenge, SeasonalEvent } from '../types/progression'
 import { HEAD_SHAPES, HEAD_COLORS, BG_COLORS, SPEEDS, FOOD_TYPES, GRID_SIZES } from '../utils/constants'
@@ -379,11 +412,18 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// Collapse state for challenges section
+const challengesExpanded = ref(true)
+
 const updateGameMode = (mode: GameMode) => {
   emit('update-game-mode', mode)
 }
 
 const updateSettings = (key: keyof GameSettings, value: any) => {
   emit('update-settings', key, value)
+}
+
+const toggleChallenges = () => {
+  challengesExpanded.value = !challengesExpanded.value
 }
 </script>

@@ -1,14 +1,24 @@
 <template>
-  <div class="bg-gray-800 p-4 rounded-lg shadow-2xl max-w-4xl w-full">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-bold">Player Progress</h2>
-      <button
-        @click="handleGuideClick"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
-        type="button"
-      >
-        📖 Guide
-      </button>
+  <div class="bg-gray-800 p-4 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+      <h2 class="text-xl font-bold">📊 Player Progress</h2>
+      <div class="flex items-center gap-2">
+        <button
+          @click="handleGuideClick"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
+          type="button"
+        >
+          📖 Guide
+        </button>
+        <button
+          @click="$emit('close')"
+          class="text-gray-400 hover:text-white transition-colors text-xl p-1 hover:bg-gray-700 rounded"
+          type="button"
+          title="Close"
+        >
+          ✕
+        </button>
+      </div>
     </div>
     
     <!-- Navigation Tabs -->
@@ -28,8 +38,10 @@
       </button>
     </div>
 
-    <!-- Level & Experience Tab -->
-    <div v-if="activeTab === 'level'" class="space-y-4">
+    <!-- Content Area with Scrolling -->
+    <div class="flex-1 overflow-y-auto scrollbar-hide">
+      <!-- Level & Experience Tab -->
+      <div v-if="activeTab === 'level'" class="space-y-4 pb-4">
       <div class="text-center mb-6">
         <div class="text-3xl font-bold text-blue-400">Level {{ playerLevel.level }}</div>
         <div class="text-sm text-gray-400 mt-2">
@@ -112,10 +124,10 @@
           </span>
         </div>
       </div>
-    </div>
+      </div>
 
-    <!-- Achievements Tab -->
-    <div v-if="activeTab === 'achievements'" class="space-y-3">
+      <!-- Achievements Tab -->
+      <div v-if="activeTab === 'achievements'" class="space-y-3 pb-4">
       <div 
         v-for="achievement in achievements" 
         :key="achievement.id"
@@ -197,10 +209,10 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
 
-    <!-- Customization Tab -->
-    <div v-if="activeTab === 'customization'" class="space-y-6">
+      <!-- Customization Tab -->
+      <div v-if="activeTab === 'customization'" class="space-y-6 pb-4">
       <!-- Quick Instructions -->
       <div class="bg-blue-900/30 p-3 rounded-lg border border-blue-500">
         <div class="flex items-center mb-2">
@@ -281,10 +293,10 @@
           ></div>
         </div>
       </div>
-    </div>
+      </div>
 
-    <!-- Statistics Tab -->
-    <div v-if="activeTab === 'stats'" class="space-y-4">
+      <!-- Statistics Tab -->
+      <div v-if="activeTab === 'stats'" class="space-y-4 pb-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Game Statistics -->
         <div class="bg-gray-700 p-4 rounded-lg">
@@ -368,15 +380,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Close Button -->
-    <div class="flex justify-center mt-6">
-      <button
-        @click="$emit('close')"
-        class="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold py-2 px-6 rounded hover:from-gray-700 hover:to-gray-800 transition transform hover:scale-105"
-      >
-        Close
-      </button>
     </div>
     
     <!-- Progression Guide Modal -->
@@ -554,3 +557,15 @@ const formatTime = (milliseconds: number): string => {
   }
 }
 </script>
+
+<style scoped>
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
+</style>
