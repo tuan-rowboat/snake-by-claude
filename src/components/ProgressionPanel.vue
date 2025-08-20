@@ -1,6 +1,15 @@
 <template>
   <div class="bg-gray-800 p-4 rounded-lg shadow-2xl max-w-4xl w-full">
-    <h2 class="text-xl font-bold mb-4 text-center">Player Progress</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">Player Progress</h2>
+      <button
+        @click="handleGuideClick"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
+        type="button"
+      >
+        📖 Guide
+      </button>
+    </div>
     
     <!-- Navigation Tabs -->
     <div class="flex mb-4 bg-gray-700 rounded-lg p-1">
@@ -124,6 +133,19 @@
 
     <!-- Customization Tab -->
     <div v-if="activeTab === 'customization'" class="space-y-6">
+      <!-- Quick Instructions -->
+      <div class="bg-blue-900/30 p-3 rounded-lg border border-blue-500">
+        <div class="flex items-center mb-2">
+          <span class="text-xl mr-2">💡</span>
+          <span class="font-medium text-blue-400">How to Unlock More Items</span>
+        </div>
+        <div class="text-sm text-gray-300">
+          • <strong>Play games</strong> to earn XP and level up for automatic unlocks
+          • <strong>Complete achievements</strong> for special rewards and unlockables  
+          • <strong>Finish daily challenges</strong> for bonus XP and exclusive items
+          • <strong>Click the "📖 Guide" button above</strong> for detailed unlock requirements
+        </div>
+      </div>
       <!-- Snake Skins -->
       <div>
         <h3 class="text-lg font-bold mb-3">🐍 Snake Skins</h3>
@@ -144,7 +166,7 @@
             <div class="h-full flex flex-col items-center justify-center">
               <div class="text-2xl mb-1">{{ getSkinIcon(skin.pattern) }}</div>
               <div class="text-xs text-center">{{ skin.name }}</div>
-              <div v-if="!skin.unlocked" class="text-xs text-red-400 mt-1">🔒</div>
+              <div v-if="!skin.unlocked" class="text-xs text-red-400 mt-1" :title="skin.requirement || 'Requirements unknown'">🔒</div>
               <div v-if="selectedSkin === skin.id" class="text-xs text-blue-400 mt-1">✓</div>
             </div>
           </div>
@@ -171,7 +193,7 @@
             <div class="h-full flex flex-col items-center justify-center">
               <div class="text-2xl mb-1">{{ getTrailIcon(trail.effect) }}</div>
               <div class="text-xs text-center">{{ trail.name }}</div>
-              <div v-if="!trail.unlocked" class="text-xs text-red-400 mt-1">🔒</div>
+              <div v-if="!trail.unlocked" class="text-xs text-red-400 mt-1" :title="trail.requirement || 'Requirements unknown'">🔒</div>
               <div v-if="selectedTrail === trail.id" class="text-xs text-purple-400 mt-1">✓</div>
             </div>
           </div>
@@ -288,6 +310,18 @@
         Close
       </button>
     </div>
+    
+    <!-- Progression Guide Modal -->
+    <div v-if="showGuide" class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50" @click.self="showGuide = false">
+      <ProgressionGuide
+        :unlocked-skins="unlockedSkins"
+        :unlocked-trails="unlockedTrails"
+        :unlocked-colors="unlockedColors"
+        :unlocked-head-shapes="unlockedHeadShapes"
+        :current-level="playerLevel.level"
+        @close="showGuide = false"
+      />
+    </div>
   </div>
 </template>
 
@@ -301,6 +335,7 @@ import type {
   SnakeSkin,
   TrailEffect
 } from '../types/progression'
+import ProgressionGuide from './ProgressionGuide.vue'
 
 interface Props {
   playerLevel: PlayerLevel
@@ -310,6 +345,7 @@ interface Props {
   unlockedSkins: string[]
   unlockedTrails: string[]
   unlockedColors: string[]
+  unlockedHeadShapes: string[]
   selectedSkin: string
   selectedTrail: string
 }
@@ -324,6 +360,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const activeTab = ref('level')
+const showGuide = ref(false)
 
 const tabs = [
   { id: 'level', name: 'Level', icon: '📊' },
@@ -386,6 +423,10 @@ const displayStats = computed(() => [
 ])
 
 // Methods
+const handleGuideClick = (): void => {
+  showGuide.value = true
+}
+
 const selectSkin = (skinId: string): void => {
   const skin = availableSkins.find(s => s.id === skinId)
   if (skin?.unlocked) {

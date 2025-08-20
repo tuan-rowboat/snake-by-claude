@@ -214,6 +214,18 @@
       </div>
     </div>
     
+    <!-- Progression Tip -->
+    <div class="mt-4 p-3 bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-lg border border-blue-500/30">
+      <div class="flex items-center mb-1">
+        <span class="text-sm mr-2">💡</span>
+        <span class="text-sm font-medium text-blue-400">New Progression System!</span>
+      </div>
+      <div class="text-xs text-gray-300">
+        Play games to earn XP, unlock achievements, and customize your snake! 
+        <span class="text-purple-400">Click "📊 Progress" button</span> to view your stats and unlock rewards.
+      </div>
+    </div>
+    
     <button
       @click="$emit('start-game')"
       data-testid="start-game-btn"

@@ -31,6 +31,16 @@
       🏆 New High Score! 🏆
     </div>
     
+    <!-- Progression Summary -->
+    <div class="mb-6 p-3 bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-lg border border-purple-500/30">
+      <div class="text-sm font-medium text-purple-400 mb-1">📈 Progress Earned</div>
+      <div class="text-xs text-gray-300">
+        XP gained, achievements progress, and unlocks are tracked automatically.
+        <br>
+        <span class="text-purple-400">Check your "📊 Progress" in the main menu!</span>
+      </div>
+    </div>
+    
     <div class="flex gap-4">
       <button
         @click="$emit('restart-game')"

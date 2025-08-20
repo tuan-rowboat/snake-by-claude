@@ -60,6 +60,7 @@
       :unlocked-skins="progressionData.unlockedSkins"
       :unlocked-trails="progressionData.unlockedTrails"
       :unlocked-colors="progressionData.unlockedColors"
+      :unlocked-head-shapes="progressionData.unlockedHeadShapes"
       :selected-skin="progressionData.selectedSkin"
       :selected-trail="progressionData.selectedTrail"
       @close="showProgressPanel = false"
