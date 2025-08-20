@@ -1,71 +1,97 @@
 <template>
-  <div class="flex flex-col items-center">
-    <div v-if="gameMode === 'single'" class="mb-4 flex gap-8 items-center">
-      <div class="text-xl font-bold">Score: <span class="text-green-400 text-2xl">{{ score }}</span></div>
-      <div v-if="bulletCount && bulletCount > 0" class="text-lg font-bold text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }} (Press S to shoot)</div>
-      <div class="text-sm opacity-75 animate-pulse">Press SPACE to {{ gameState === 'playing' ? 'Pause' : 'Resume' }}</div>
-    </div>
-    
-    <div v-if="gameMode === 'multiplayer'" class="mb-4 flex gap-8 items-center">
-      <div class="text-lg font-bold">
-        Player 1: <span class="text-green-400 text-xl">{{ score }}</span>
-        <div v-if="bulletCount && bulletCount > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }}</div>
+  <div class="flex gap-6 items-start justify-center">
+    <!-- Main Game Area -->
+    <div class="flex flex-col items-center">
+      <!-- Score Display -->
+      <div v-if="gameMode === 'single'" class="mb-4 flex gap-8 items-center">
+        <div class="text-xl font-bold">Score: <span class="text-green-400 text-2xl">{{ score }}</span></div>
+        <div v-if="bulletCount && bulletCount > 0" class="text-lg font-bold text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }} (Press S to shoot)</div>
       </div>
-      <div class="text-sm opacity-75 animate-pulse">Press SPACE to {{ gameState === 'playing' ? 'Pause' : 'Resume' }}</div>
-      <div class="text-lg font-bold">
-        Player 2: <span class="text-blue-400 text-xl">{{ score2 }}</span>
-        <div v-if="bulletCount2 && bulletCount2 > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount2 }}</div>
+      
+      <div v-if="gameMode === 'multiplayer'" class="mb-4 flex gap-8 items-center">
+        <div class="text-lg font-bold">
+          Player 1: <span class="text-green-400 text-xl">{{ score }}</span>
+          <div v-if="bulletCount && bulletCount > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }}</div>
+        </div>
+        <div class="text-lg font-bold">
+          Player 2: <span class="text-blue-400 text-xl">{{ score2 }}</span>
+          <div v-if="bulletCount2 && bulletCount2 > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount2 }}</div>
+        </div>
+      </div>
+
+      <!-- Game Canvas -->
+      <div class="relative rounded-lg overflow-hidden shadow-2xl">
+        <canvas
+          ref="canvasRef"
+          :width="gameSize.width"
+          :height="gameSize.height"
+          class="border-2 border-gray-700"
+        />
       </div>
     </div>
 
-    <div class="relative rounded-lg overflow-hidden shadow-2xl">
-      <canvas
-        ref="canvasRef"
-        :width="gameSize.width"
-        :height="gameSize.height"
-        class="border-2 border-gray-700"
-      />
-    </div>
-
-    <div class="mt-4 text-sm opacity-75">
-      <div v-if="gameMode === 'single'" class="text-center mb-2">🎮 Use Arrow Keys or WASD to move</div>
-      <div v-if="gameMode === 'multiplayer'" class="text-center mb-2">
-        🎮 Player 1: Arrow Keys | Player 2: WASD
+    <!-- Right Panel -->
+    <div class="flex flex-col gap-4 text-sm w-64">
+      <!-- Pause Controls -->
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <div class="text-center mb-3">
+          <div class="text-yellow-400 font-medium animate-pulse">Press SPACE to {{ gameState === 'playing' ? 'Pause' : 'Resume' }}</div>
+        </div>
+        
+        <!-- Movement Controls -->
+        <div class="text-center mb-3">
+          <div v-if="gameMode === 'single'" class="text-gray-300">🎮 Use Arrow Keys or WASD to move</div>
+          <div v-if="gameMode === 'multiplayer'" class="text-gray-300">
+            🎮 Player 1: Arrow Keys<br>
+            🎮 Player 2: WASD
+          </div>
+        </div>
       </div>
       
       <!-- Teleport Controls -->
-      <div v-if="settings.teleportEnabled" class="text-center mb-2 bg-purple-900/30 p-2 rounded">
-        <div class="text-purple-300 font-medium mb-1">🌀 Teleport Controls</div>
-        <div v-if="gameMode === 'single'" class="text-xs">
-          <span :class="{ 'text-gray-500': teleportCooldown && teleportCooldown > 0 }">
-            T: Random Teleport | R: Direction Teleport
-          </span>
-          <div v-if="teleportCooldown && teleportCooldown > 0" class="text-yellow-400 mt-1">
+      <div v-if="settings.teleportEnabled" class="bg-purple-900/30 p-4 rounded-lg">
+        <div class="text-purple-300 font-medium mb-3 text-center">🌀 Teleport Controls</div>
+        <div v-if="gameMode === 'single'" class="text-xs text-center">
+          <div :class="{ 'text-gray-500': teleportCooldown && teleportCooldown > 0 }" class="mb-2">
+            T: Random Teleport<br>
+            R: Direction Teleport
+          </div>
+          <div v-if="teleportCooldown && teleportCooldown > 0" class="text-yellow-400">
             Cooldown: {{ Math.ceil(teleportCooldown / 1000) }}s
           </div>
         </div>
         <div v-if="gameMode === 'multiplayer'" class="text-xs">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-4 text-center">
             <div :class="{ 'text-gray-500': teleportCooldown && teleportCooldown > 0 }">
-              P1: T/R
-              <div v-if="teleportCooldown && teleportCooldown > 0" class="text-yellow-400">
+              <div class="font-medium text-green-400">Player 1</div>
+              <div>T: Random</div>
+              <div>R: Direction</div>
+              <div v-if="teleportCooldown && teleportCooldown > 0" class="text-yellow-400 mt-1">
                 {{ Math.ceil(teleportCooldown / 1000) }}s
               </div>
             </div>
             <div :class="{ 'text-gray-500': teleportCooldown2 && teleportCooldown2 > 0 }">
-              P2: Q/X
-              <div v-if="teleportCooldown2 && teleportCooldown2 > 0" class="text-yellow-400">
+              <div class="font-medium text-blue-400">Player 2</div>
+              <div>Q: Random</div>
+              <div>X: Direction</div>
+              <div v-if="teleportCooldown2 && teleportCooldown2 > 0" class="text-yellow-400 mt-1">
                 {{ Math.ceil(teleportCooldown2 / 1000) }}s
               </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <div class="grid grid-cols-4 gap-2 text-xs bg-gray-800 p-3 rounded">
-        <div v-for="([type, props]) in Object.entries(FOOD_TYPES)" :key="type" class="flex items-center gap-1">
-          <span>{{ props.emoji }}</span>
-          <span>{{ props.points }}pts</span>
+
+      <!-- Food Legend -->
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <div class="text-center mb-3">
+          <div class="text-blue-400 font-medium">🍎 Food Guide</div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div v-for="([type, props]) in Object.entries(FOOD_TYPES)" :key="type" class="flex items-center gap-1">
+            <span>{{ props.emoji }}</span>
+            <span>{{ props.points }}pts</span>
+          </div>
         </div>
       </div>
     </div>
