@@ -214,15 +214,93 @@
       </div>
     </div>
     
+    <!-- Active Challenges -->
+    <div v-if="todaysChallenge || thisWeeksChallenge || (activeSeasonalEvents && activeSeasonalEvents.length > 0)" class="mt-4 space-y-3">
+      <h3 class="text-lg font-bold text-center text-yellow-400">🌟 Active Challenges</h3>
+      
+      <!-- Daily Challenge -->
+      <div v-if="todaysChallenge" class="p-3 bg-gradient-to-r from-purple-800 to-pink-800 rounded-lg border border-purple-500">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-sm font-bold text-purple-200">📅 Daily Challenge</h4>
+          <span v-if="todaysChallenge.completed" class="text-xs text-green-400">✓ Completed!</span>
+        </div>
+        <div class="text-xs text-white mb-2">{{ todaysChallenge.title }}</div>
+        <div class="text-xs text-purple-200 mb-2">{{ todaysChallenge.objective }}</div>
+        <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
+          <div 
+            class="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-500"
+            :style="{ width: Math.min(100, (todaysChallenge.progress / todaysChallenge.target) * 100) + '%' }"
+          ></div>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="text-purple-300">{{ todaysChallenge.progress }} / {{ todaysChallenge.target }}</span>
+          <span class="text-yellow-400">{{ todaysChallenge.reward.experience }} XP</span>
+        </div>
+      </div>
+      
+      <!-- Weekly Challenge -->
+      <div v-if="thisWeeksChallenge" class="p-3 bg-gradient-to-r from-indigo-800 to-purple-800 rounded-lg border border-indigo-500">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-sm font-bold text-indigo-200">🏆 Weekly Challenge</h4>
+          <div class="flex items-center gap-2">
+            <span :class="[
+              'text-xs px-2 py-1 rounded',
+              thisWeeksChallenge.difficulty === 'easy' ? 'bg-green-600 text-green-200' :
+              thisWeeksChallenge.difficulty === 'medium' ? 'bg-yellow-600 text-yellow-200' :
+              thisWeeksChallenge.difficulty === 'hard' ? 'bg-red-600 text-red-200' : 'bg-purple-600 text-purple-200'
+            ]">{{ thisWeeksChallenge.difficulty.toUpperCase() }}</span>
+            <span v-if="thisWeeksChallenge.completed" class="text-xs text-green-400">✓ Done!</span>
+          </div>
+        </div>
+        <div class="text-xs text-white mb-2">{{ thisWeeksChallenge.title }}</div>
+        <div class="text-xs text-indigo-200 mb-2">{{ thisWeeksChallenge.objective }}</div>
+        <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
+          <div 
+            class="bg-gradient-to-r from-indigo-400 to-purple-500 h-2 rounded-full transition-all duration-500"
+            :style="{ width: Math.min(100, (thisWeeksChallenge.progress / thisWeeksChallenge.target) * 100) + '%' }"
+          ></div>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="text-indigo-300">{{ thisWeeksChallenge.progress }} / {{ thisWeeksChallenge.target }}</span>
+          <span class="text-indigo-300">{{ thisWeeksChallenge.reward.experience }} XP</span>
+        </div>
+      </div>
+      
+      <!-- Seasonal Events -->
+      <div v-if="activeSeasonalEvents && activeSeasonalEvents.length > 0" class="space-y-2">
+        <div 
+          v-for="event in activeSeasonalEvents" 
+          :key="event.id"
+          class="p-3 bg-gradient-to-r from-green-800 to-teal-800 rounded-lg border border-green-500"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-sm font-bold text-green-200">{{ event.icon }} {{ event.name }}</h4>
+            <span :class="[
+              'text-xs px-2 py-1 rounded',
+              event.theme === 'spring' ? 'bg-green-600 text-green-200' :
+              event.theme === 'summer' ? 'bg-yellow-600 text-yellow-200' :
+              event.theme === 'fall' ? 'bg-orange-600 text-orange-200' :
+              event.theme === 'winter' ? 'bg-blue-600 text-blue-200' :
+              'bg-purple-600 text-purple-200'
+            ]">{{ event.theme.toUpperCase() }}</span>
+          </div>
+          <div class="text-xs text-green-200 mb-2">{{ event.description }}</div>
+          <div class="text-xs text-green-300">
+            {{ event.challenges.filter(c => c.completed).length }} / {{ event.challenges.length }} challenges completed
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Progression Tip -->
     <div class="mt-4 p-3 bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-lg border border-blue-500/30">
       <div class="flex items-center mb-1">
         <span class="text-sm mr-2">💡</span>
-        <span class="text-sm font-medium text-blue-400">New Progression System!</span>
+        <span class="text-sm font-medium text-blue-400">Progression System</span>
       </div>
       <div class="text-xs text-gray-300">
-        Play games to earn XP, unlock achievements, and customize your snake! 
-        <span class="text-purple-400">Click "📊 Progress" button</span> to view your stats and unlock rewards.
+        Complete challenges, earn XP, unlock achievements, and customize your snake! 
+        <span class="text-purple-400">Click "📊 Progress" button</span> to view detailed stats and rewards.
       </div>
     </div>
     
@@ -280,12 +358,16 @@
 
 <script setup lang="ts">
 import type { GameMode, GameSettings } from '../types/game'
+import type { DailyChallenge, WeeklyChallenge, SeasonalEvent } from '../types/progression'
 import { HEAD_SHAPES, HEAD_COLORS, BG_COLORS, SPEEDS, FOOD_TYPES, GRID_SIZES } from '../utils/constants'
 
 interface Props {
   gameMode: GameMode
   settings: GameSettings
   highScores: number[]
+  todaysChallenge?: DailyChallenge | null
+  thisWeeksChallenge?: WeeklyChallenge | null
+  activeSeasonalEvents?: SeasonalEvent[]
 }
 
 interface Emits {

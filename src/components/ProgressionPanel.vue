@@ -78,6 +78,40 @@
           </span>
         </div>
       </div>
+
+      <!-- Weekly Challenge -->
+      <div v-if="thisWeeksChallenge" class="bg-gradient-to-r from-indigo-800 to-purple-800 p-4 rounded-lg">
+        <h3 class="text-lg font-bold mb-2">
+          🏆 Weekly Challenge 
+          <span :class="[
+            'text-xs px-2 py-1 rounded',
+            thisWeeksChallenge.difficulty === 'easy' ? 'bg-green-600' :
+            thisWeeksChallenge.difficulty === 'medium' ? 'bg-yellow-600' :
+            thisWeeksChallenge.difficulty === 'hard' ? 'bg-red-600' : 'bg-purple-600'
+          ]">{{ thisWeeksChallenge.difficulty.toUpperCase() }}</span>
+        </h3>
+        <div class="text-sm mb-2">{{ thisWeeksChallenge.title }}</div>
+        <div class="text-xs text-gray-300 mb-3">{{ thisWeeksChallenge.objective }}</div>
+        
+        <!-- Challenge Progress -->
+        <div class="w-full bg-gray-700 rounded-full h-3 mb-2">
+          <div 
+            class="bg-gradient-to-r from-indigo-400 to-purple-500 h-3 rounded-full transition-all duration-500"
+            :style="{ width: weeklyPercentage + '%' }"
+          ></div>
+        </div>
+        <div class="text-xs text-center">
+          {{ thisWeeksChallenge.progress }} / {{ thisWeeksChallenge.target }}
+          <span v-if="thisWeeksChallenge.completed" class="text-green-400 ml-2">✓ Completed!</span>
+        </div>
+        
+        <div class="text-xs text-indigo-300 mt-2">
+          Reward: {{ thisWeeksChallenge.reward.experience }} XP
+          <span v-if="thisWeeksChallenge.reward.unlockable">
+            + {{ thisWeeksChallenge.reward.unlockable.name }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Achievements Tab -->
@@ -89,20 +123,43 @@
           'p-3 rounded-lg border-2 transition-all',
           achievement.unlocked 
             ? 'bg-green-900 border-green-500' 
-            : 'bg-gray-700 border-gray-600'
+            : achievement.milestone 
+              ? 'bg-purple-900 border-purple-500' 
+              : 'bg-gray-700 border-gray-600'
         ]"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <span class="text-2xl">{{ achievement.icon }}</span>
-            <div>
+            <div class="flex-1">
               <div :class="[
-                'font-medium',
+                'font-medium flex items-center gap-2',
                 achievement.unlocked ? 'text-green-400' : 'text-white'
               ]">
                 {{ achievement.name }}
+                <span v-if="achievement.milestone" class="text-xs px-2 py-1 bg-purple-600 rounded text-purple-200">
+                  MILESTONE
+                </span>
               </div>
               <div class="text-sm text-gray-400">{{ achievement.description }}</div>
+              
+              <!-- Multi-step Achievement Steps -->
+              <div v-if="achievement.steps && achievement.steps.length > 0" class="mt-2 space-y-1">
+                <div class="text-xs text-purple-400 font-medium">Requirements:</div>
+                <div 
+                  v-for="step in achievement.steps" 
+                  :key="step.id"
+                  :class="[
+                    'text-xs flex items-center justify-between px-2 py-1 rounded',
+                    step.completed ? 'bg-green-800 text-green-200' : 'bg-gray-600 text-gray-300'
+                  ]"
+                >
+                  <span>{{ step.name }}</span>
+                  <span :class="step.completed ? 'text-green-400' : 'text-gray-400'">
+                    {{ step.completed ? '✓' : `${step.progress}/${step.requirement}` }}
+                  </span>
+                </div>
+              </div>
               
               <!-- Achievement Reward -->
               <div v-if="achievement.reward" class="text-xs text-yellow-400 mt-1">
@@ -114,6 +171,17 @@
           <div class="text-right">
             <div v-if="achievement.unlocked" class="text-green-400 font-bold">
               ✓ UNLOCKED
+            </div>
+            <div v-else-if="achievement.steps && achievement.steps.length > 0" class="text-sm">
+              <div class="text-gray-400">{{ achievement.progress }} / {{ achievement.requirement }} steps</div>
+              
+              <!-- Progress Bar -->
+              <div class="w-20 bg-gray-600 rounded-full h-2 mt-1">
+                <div 
+                  class="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                  :style="{ width: (achievement.progress / achievement.requirement * 100) + '%' }"
+                ></div>
+              </div>
             </div>
             <div v-else class="text-sm">
               <div class="text-gray-400">{{ achievement.progress }} / {{ achievement.requirement }}</div>
@@ -332,6 +400,7 @@ import type {
   PlayerLevel, 
   PlayerStats, 
   DailyChallenge,
+  WeeklyChallenge,
   SnakeSkin,
   TrailEffect
 } from '../types/progression'
@@ -342,6 +411,7 @@ interface Props {
   achievements: Achievement[]
   stats: PlayerStats
   todaysChallenge: DailyChallenge | null
+  thisWeeksChallenge: WeeklyChallenge | null
   unlockedSkins: string[]
   unlockedTrails: string[]
   unlockedColors: string[]
@@ -405,6 +475,11 @@ const experiencePercentage = computed(() => {
 const challengePercentage = computed(() => {
   if (!props.todaysChallenge) return 0
   return Math.min(100, (props.todaysChallenge.progress / props.todaysChallenge.target) * 100)
+})
+
+const weeklyPercentage = computed(() => {
+  if (!props.thisWeeksChallenge) return 0
+  return Math.min(100, (props.thisWeeksChallenge.progress / props.thisWeeksChallenge.target) * 100)
 })
 
 const unlockedAchievements = computed(() => {
