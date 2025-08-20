@@ -99,10 +99,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, type Ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue'
 import type { Position, Food, Bullet, GameState, GameMode, Direction, GameSettings } from '../types/game'
 import { FOOD_TYPES, getGameSize } from '../utils/constants'
-import { drawShape, drawSnakeEyes, drawGrid, drawWalls, drawPauseOverlay } from '../utils/drawing'
+import { drawGrid, drawWalls, drawPauseOverlay, drawSnakeWithTrail, drawAnimatedFood, drawBulletWithTrail } from '../utils/drawing'
+import { ParticleSystem } from '../utils/particles'
+import { ScreenShake } from '../utils/screenShake'
 
 interface Props {
   gameState: GameState
@@ -127,8 +129,35 @@ const props = defineProps<Props>()
 
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 
+// Visual effects instances
+const particleSystem = new ParticleSystem()
+const screenShake = new ScreenShake()
+let animationFrame: number | null = null
+let lastTime = 0
+let currentTime = 0
+
 // Computed game size based on grid size
 const gameSize = computed(() => getGameSize(props.settings.gridSize))
+
+// Track previous state for effect triggers
+let previousFoods: Food[] = []
+let previousBullets: Bullet[] = []
+
+const animate = (timestamp: number): void => {
+  const deltaTime = timestamp - lastTime
+  lastTime = timestamp
+  currentTime = timestamp
+  
+  // Update visual effects
+  particleSystem.update(deltaTime)
+  screenShake.update(deltaTime)
+  
+  draw()
+  
+  if (props.gameState === 'playing') {
+    animationFrame = requestAnimationFrame(animate)
+  }
+}
 
 const draw = (): void => {
   const canvas = canvasRef.value
@@ -136,6 +165,11 @@ const draw = (): void => {
   
   const ctx = canvas.getContext('2d')
   if (!ctx) return
+  
+  ctx.save()
+  
+  // Apply screen shake
+  screenShake.apply(ctx)
   
   // Clear canvas
   ctx.fillStyle = props.settings.bgColor
@@ -147,81 +181,128 @@ const draw = (): void => {
   // Draw walls
   drawWalls(ctx, props.walls)
   
-  // Draw foods
+  // Draw foods with animations
   props.foods.forEach(food => {
-    const foodProps = FOOD_TYPES[food.type]
-    drawShape(ctx, foodProps.shape, food.x * 25 + 2, food.y * 25 + 2, 25 - 4, foodProps.color)
-    
-    // Draw emoji
-    ctx.font = '16px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText(foodProps.emoji, food.x * 25 + 12, food.y * 25 + 16)
+    drawAnimatedFood(ctx, food, currentTime)
   })
   
-  // Draw snake 1
-  props.snake.forEach((segment, index) => {
-    if (index === 0) {
-      // Draw head
-      drawShape(ctx, props.settings.headShape, segment.x * 25 + 1, segment.y * 25 + 1, 25 - 2, props.settings.headColor)
-      
-      // Draw eyes for head
-      drawSnakeEyes(ctx, segment, props.direction, props.settings.headShape)
-    } else {
-      // Draw body with gradient effect
-      const opacity = 1 - (index / props.snake.length) * 0.3
-      ctx.fillStyle = props.settings.headColor + Math.floor(opacity * 255).toString(16).padStart(2, '0')
-      ctx.fillRect(segment.x * 25 + 2, segment.y * 25 + 2, 25 - 4, 25 - 4)
-    }
-  })
+  // Draw snake 1 with trail effects
+  drawSnakeWithTrail(ctx, props.snake, props.direction, props.settings.headShape, props.settings.headColor)
   
-  // Draw snake 2 (only in multiplayer mode)
-  if (props.gameMode === 'multiplayer') {
-    props.snake2.forEach((segment, index) => {
-      if (index === 0) {
-        // Draw head
-        drawShape(ctx, props.settings.headShape, segment.x * 25 + 1, segment.y * 25 + 1, 25 - 2, props.settings.headColor2)
-        
-        // Draw eyes for head
-        drawSnakeEyes(ctx, segment, props.direction2, props.settings.headShape)
-      } else {
-        // Draw body with gradient effect
-        const opacity = 1 - (index / props.snake2.length) * 0.3
-        ctx.fillStyle = props.settings.headColor2 + Math.floor(opacity * 255).toString(16).padStart(2, '0')
-        ctx.fillRect(segment.x * 25 + 2, segment.y * 25 + 2, 25 - 4, 25 - 4)
-      }
-    })
+  // Create trail particles for snake movement
+  if (props.snake.length > 1) {
+    particleSystem.createTrailParticles(props.snake[1], props.settings.headColor)
   }
   
-  // Draw bullets
+  // Draw snake 2 (only in multiplayer mode) with trail effects
+  if (props.gameMode === 'multiplayer') {
+    drawSnakeWithTrail(ctx, props.snake2, props.direction2, props.settings.headShape, props.settings.headColor2)
+    
+    // Create trail particles for snake 2 movement
+    if (props.snake2.length > 1) {
+      particleSystem.createTrailParticles(props.snake2[1], props.settings.headColor2)
+    }
+  }
+  
+  // Draw bullets with enhanced effects
   props.bullets.forEach(bullet => {
-    const bulletColor = bullet.playerId === 1 ? '#ff6600' : '#ff0088'
-    ctx.fillStyle = bulletColor
-    ctx.fillRect(bullet.x * 25 + 8, bullet.y * 25 + 8, 9, 9)
-    
-    // Add glow effect
-    ctx.shadowColor = bulletColor
-    ctx.shadowBlur = 10
-    ctx.fillRect(bullet.x * 25 + 8, bullet.y * 25 + 8, 9, 9)
-    ctx.shadowBlur = 0
-    
-    // Draw bullet emoji
-    ctx.font = '12px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillStyle = '#ffffff'
-    ctx.fillText('●', bullet.x * 25 + 12, bullet.y * 25 + 16)
+    drawBulletWithTrail(ctx, bullet)
   })
+  
+  // Draw particles
+  particleSystem.draw(ctx)
   
   // Draw pause overlay
   if (props.gameState === 'paused') {
     drawPauseOverlay(ctx, props.settings.gridSize)
   }
+  
+  // Reset screen shake
+  screenShake.reset(ctx)
+  
+  ctx.restore()
 }
 
-// Watch for prop changes to redraw
-watch(() => [props.snake, props.snake2, props.foods, props.walls, props.bullets, props.gameState], draw, { deep: true })
+// Detect effects from game state changes
+const detectEffects = (): void => {
+  // Detect food collection (foods disappeared)
+  const currentFoodIds = props.foods.map(f => `${f.x},${f.y},${f.type}`)
+  const previousFoodIds = previousFoods.map(f => `${f.x},${f.y},${f.type}`)
+  
+  previousFoodIds.forEach((foodId, index) => {
+    if (!currentFoodIds.includes(foodId)) {
+      const food = previousFoods[index]
+      // Food was eaten - create particles and screen shake
+      particleSystem.createFoodParticles(food, food.type)
+      screenShake.start(3, 200) // Light shake for food collection
+    }
+  })
+  
+  // Detect new foods spawning
+  currentFoodIds.forEach((foodId, index) => {
+    if (!previousFoodIds.includes(foodId)) {
+      const food = props.foods[index]
+      // Food spawned - create spawn effect and set spawn time
+      if (!food.spawnTime) {
+        food.spawnTime = currentTime
+      }
+      particleSystem.createFoodSpawnEffect(food, food.type)
+    }
+  })
+  
+  // Detect bullet impacts (bullets disappeared)
+  const currentBulletIds = props.bullets.map(b => `${b.x},${b.y}`)
+  const previousBulletIds = previousBullets.map(b => `${b.x},${b.y}`)
+  
+  previousBulletIds.forEach((bulletId, index) => {
+    if (!currentBulletIds.includes(bulletId)) {
+      const bullet = previousBullets[index]
+      // Bullet hit something - create impact effect and screen shake
+      particleSystem.createBulletImpact(bullet)
+      screenShake.start(5, 300) // Stronger shake for bullet impact
+    }
+  })
+  
+  // Update previous state
+  previousFoods = [...props.foods]
+  previousBullets = [...props.bullets]
+}
+
+// Watch for game state changes and start animation
+watch(() => props.gameState, (newState, oldState) => {
+  if (newState === 'playing' && oldState !== 'playing') {
+    lastTime = performance.now()
+    animationFrame = requestAnimationFrame(animate)
+  } else if (newState !== 'playing' && animationFrame) {
+    cancelAnimationFrame(animationFrame)
+    animationFrame = null
+  }
+})
+
+// Watch for prop changes to detect effects and redraw
+watch(() => [props.snake, props.snake2, props.foods, props.walls, props.bullets], () => {
+  detectEffects()
+  if (props.gameState !== 'playing') {
+    draw() // Only redraw manually when not animating
+  }
+}, { deep: true })
 
 onMounted(() => {
-  draw()
+  previousFoods = [...props.foods]
+  previousBullets = [...props.bullets]
+  
+  if (props.gameState === 'playing') {
+    lastTime = performance.now()
+    animationFrame = requestAnimationFrame(animate)
+  } else {
+    draw()
+  }
+})
+
+onUnmounted(() => {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame)
+  }
 })
 
 defineExpose({ draw })

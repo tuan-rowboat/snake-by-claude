@@ -11,6 +11,8 @@ export interface Direction {
 
 export interface Food extends Position {
   type: FoodType
+  spawnTime?: number // For spawn animation
+  scale?: number // For pulsing animation
 }
 
 export type FoodType = 'apple' | 'golden' | 'berry' | 'super' | 'banana' | 'cherry' | 'watermelon' | 'mushroom' | 'poison' | 'bullet' | 'growth' | 'shrink'

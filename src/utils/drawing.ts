@@ -1,5 +1,5 @@
-import type { ShapeType, HeadShape, Direction, Position } from '../types/game'
-import { CELL_SIZE, getGameSize } from './constants'
+import type { ShapeType, HeadShape, Direction, Position, Food } from '../types/game'
+import { CELL_SIZE, getGameSize, FOOD_TYPES } from './constants'
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeType, x: number, y: number, size: number, color: string | CanvasGradient): void => {
   ctx.fillStyle = color
@@ -118,4 +118,119 @@ export const drawPauseOverlay = (ctx: CanvasRenderingContext2D, gridSize: number
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('PAUSED', gameSize.width / 2, gameSize.height / 2)
+}
+
+export const drawSnakeWithTrail = (
+  ctx: CanvasRenderingContext2D,
+  snake: Position[],
+  direction: Direction,
+  headShape: HeadShape,
+  headColor: string
+): void => {
+  snake.forEach((segment, index) => {
+    if (index === 0) {
+      // Draw head with glow effect
+      ctx.save()
+      ctx.shadowColor = headColor
+      ctx.shadowBlur = 8
+      drawShape(ctx, headShape, segment.x * CELL_SIZE + 1, segment.y * CELL_SIZE + 1, CELL_SIZE - 2, headColor)
+      ctx.restore()
+      
+      // Draw eyes for head
+      drawSnakeEyes(ctx, segment, direction, headShape)
+    } else {
+      // Draw body with gradient effect and subtle glow
+      const opacity = 1 - (index / snake.length) * 0.3
+      const alpha = Math.floor(opacity * 255).toString(16).padStart(2, '0')
+      const bodyColor = headColor + alpha
+      
+      ctx.save()
+      ctx.shadowColor = headColor
+      ctx.shadowBlur = 3
+      ctx.fillStyle = bodyColor
+      ctx.fillRect(segment.x * CELL_SIZE + 2, segment.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4)
+      ctx.restore()
+    }
+  })
+}
+
+export const drawAnimatedFood = (
+  ctx: CanvasRenderingContext2D,
+  food: Food,
+  currentTime: number
+): void => {
+  const foodProps = FOOD_TYPES[food.type]
+  const spawnTime = food.spawnTime || 0
+  const age = currentTime - spawnTime
+  
+  // Calculate scale based on spawn animation and pulsing
+  let scale = 1
+  if (age < 300) {
+    // Spawn animation: grow from 0 to 1
+    scale = Math.min(1, age / 300)
+  } else {
+    // Pulsing animation for special foods
+    if (foodProps.effect) {
+      scale = 1 + Math.sin(currentTime * 0.005) * 0.1
+    }
+  }
+  
+  // Calculate position and size
+  const size = (CELL_SIZE - 4) * scale
+  const offset = (CELL_SIZE - size) / 2
+  const x = food.x * CELL_SIZE + offset
+  const y = food.y * CELL_SIZE + offset
+  
+  ctx.save()
+  
+  // Add glow effect for special foods
+  if (foodProps.effect) {
+    ctx.shadowColor = foodProps.color
+    ctx.shadowBlur = 10 + Math.sin(currentTime * 0.01) * 3
+  }
+  
+  // Draw the food shape
+  drawShape(ctx, foodProps.shape, x, y, size, foodProps.color)
+  
+  ctx.restore()
+  
+  // Draw emoji
+  ctx.font = `${Math.floor(16 * scale)}px Arial`
+  ctx.textAlign = 'center'
+  ctx.fillStyle = 'white'
+  ctx.fillText(
+    foodProps.emoji, 
+    food.x * CELL_SIZE + CELL_SIZE / 2, 
+    food.y * CELL_SIZE + CELL_SIZE / 2 + 4
+  )
+}
+
+export const drawBulletWithTrail = (
+  ctx: CanvasRenderingContext2D,
+  bullet: { x: number, y: number, playerId: 1 | 2 }
+): void => {
+  const bulletColor = bullet.playerId === 1 ? '#ff6600' : '#ff0088'
+  const x = bullet.x * CELL_SIZE + 8
+  const y = bullet.y * CELL_SIZE + 8
+  
+  ctx.save()
+  
+  // Draw bullet with intense glow
+  ctx.shadowColor = bulletColor
+  ctx.shadowBlur = 15
+  ctx.fillStyle = bulletColor
+  ctx.fillRect(x, y, 9, 9)
+  
+  // Add inner bright core
+  ctx.shadowBlur = 5
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(x + 2, y + 2, 5, 5)
+  
+  ctx.restore()
+  
+  // Draw bullet symbol
+  ctx.font = '12px Arial'
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText('●', bullet.x * CELL_SIZE + 12, bullet.y * CELL_SIZE + 16)
 }
