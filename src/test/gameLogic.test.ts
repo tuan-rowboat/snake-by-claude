@@ -13,7 +13,7 @@ import {
   executeDirectionalTeleport
 } from '../utils/gameLogic'
 import type { Position, Direction, Food } from '../types/game'
-import { GRID_SIZE } from '../utils/constants'
+import { DEFAULT_GRID_SIZE } from '../utils/constants'
 
 describe('Game Logic Utils', () => {
   describe('generateRandomWalls', () => {
@@ -40,9 +40,9 @@ describe('Game Logic Utils', () => {
       const walls = generateRandomWalls(20)
       walls.forEach(wall => {
         expect(wall.x).toBeGreaterThanOrEqual(0)
-        expect(wall.x).toBeLessThan(GRID_SIZE)
+        expect(wall.x).toBeLessThan(DEFAULT_GRID_SIZE)
         expect(wall.y).toBeGreaterThanOrEqual(0)
-        expect(wall.y).toBeLessThan(GRID_SIZE)
+        expect(wall.y).toBeLessThan(DEFAULT_GRID_SIZE)
       })
     })
   })
@@ -58,9 +58,9 @@ describe('Game Logic Utils', () => {
       const walls = generateMovingWalls(10)
       walls.forEach(wall => {
         expect(wall.x).toBeGreaterThanOrEqual(0)
-        expect(wall.x).toBeLessThan(GRID_SIZE)
+        expect(wall.x).toBeLessThan(DEFAULT_GRID_SIZE)
         expect(wall.y).toBeGreaterThanOrEqual(0)
-        expect(wall.y).toBeLessThan(GRID_SIZE)
+        expect(wall.y).toBeLessThan(DEFAULT_GRID_SIZE)
       })
     })
   })
@@ -74,9 +74,9 @@ describe('Game Logic Utils', () => {
       expect(movedWalls).toHaveLength(walls.length)
       movedWalls.forEach(wall => {
         expect(wall.x).toBeGreaterThanOrEqual(0)
-        expect(wall.x).toBeLessThan(GRID_SIZE)
+        expect(wall.x).toBeLessThan(DEFAULT_GRID_SIZE)
         expect(wall.y).toBeGreaterThanOrEqual(0)
-        expect(wall.y).toBeLessThan(GRID_SIZE)
+        expect(wall.y).toBeLessThan(DEFAULT_GRID_SIZE)
       })
     })
 
@@ -101,9 +101,9 @@ describe('Game Logic Utils', () => {
       expect(food).toHaveProperty('y')
       expect(food).toHaveProperty('type')
       expect(food.x).toBeGreaterThanOrEqual(0)
-      expect(food.x).toBeLessThan(GRID_SIZE)
+      expect(food.x).toBeLessThan(DEFAULT_GRID_SIZE)
       expect(food.y).toBeGreaterThanOrEqual(0)
-      expect(food.y).toBeLessThan(GRID_SIZE)
+      expect(food.y).toBeLessThan(DEFAULT_GRID_SIZE)
     })
 
     it('should not place food on snake', () => {
@@ -271,9 +271,9 @@ describe('Game Logic Utils', () => {
         expect(positions.length).toBeGreaterThan(0)
         positions.forEach(pos => {
           expect(pos.x).toBeGreaterThanOrEqual(0)
-          expect(pos.x).toBeLessThan(GRID_SIZE)
+          expect(pos.x).toBeLessThan(DEFAULT_GRID_SIZE)
           expect(pos.y).toBeGreaterThanOrEqual(0)
-          expect(pos.y).toBeLessThan(GRID_SIZE)
+          expect(pos.y).toBeLessThan(DEFAULT_GRID_SIZE)
           
           // Should not be on snake
           expect(snake).not.toContainEqual(pos)
@@ -319,8 +319,8 @@ describe('Game Logic Utils', () => {
         const snake: Position[] = [{ x: 0, y: 0 }]
         const walls: Position[] = []
         // Fill most of the grid with walls to simulate no valid positions
-        for (let x = 0; x < GRID_SIZE; x++) {
-          for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < DEFAULT_GRID_SIZE; x++) {
+          for (let y = 0; y < DEFAULT_GRID_SIZE; y++) {
             if (!(x === 0 && y === 0)) {
               walls.push({ x, y })
             }
@@ -345,14 +345,14 @@ describe('Game Logic Utils', () => {
       })
 
       it('should wrap around boundaries', () => {
-        const snake: Position[] = [{ x: GRID_SIZE - 1, y: 10 }]
+        const snake: Position[] = [{ x: DEFAULT_GRID_SIZE - 1, y: 10 }]
         const direction: Direction = { x: 1, y: 0 }
         const walls: Position[] = []
         
         const newPosition = executeDirectionalTeleport(snake, direction, walls)
         
         // Should wrap around to the left side
-        expect(newPosition.x).toBeLessThan(GRID_SIZE - 1)
+        expect(newPosition.x).toBeLessThan(DEFAULT_GRID_SIZE - 1)
       })
 
       it('should avoid walls and find nearby safe space', () => {

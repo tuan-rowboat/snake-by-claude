@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  GRID_SIZE,
+  DEFAULT_GRID_SIZE,
   CELL_SIZE,
-  GAME_WIDTH,
-  GAME_HEIGHT,
   WALL_PATTERNS,
   FOOD_TYPES,
   HEAD_SHAPES,
@@ -11,23 +9,26 @@ import {
   BG_COLORS,
   SPEEDS,
   TELEPORT_COOLDOWN,
-  TELEPORT_RANGE
+  TELEPORT_RANGE,
+  getGameSize
 } from '../utils/constants'
 
 describe('Constants', () => {
   describe('Grid Constants', () => {
     it('should have valid grid dimensions', () => {
-      expect(GRID_SIZE).toBeGreaterThan(0)
+      expect(DEFAULT_GRID_SIZE).toBeGreaterThan(0)
       expect(CELL_SIZE).toBeGreaterThan(0)
-      expect(GAME_WIDTH).toBe(GRID_SIZE * CELL_SIZE)
-      expect(GAME_HEIGHT).toBe(GRID_SIZE * CELL_SIZE)
+      const gameSize = getGameSize(DEFAULT_GRID_SIZE)
+      expect(gameSize.width).toBe(DEFAULT_GRID_SIZE * CELL_SIZE)
+      expect(gameSize.height).toBe(DEFAULT_GRID_SIZE * CELL_SIZE)
     })
 
     it('should have consistent dimensions', () => {
-      expect(GAME_WIDTH).toBeGreaterThan(0)
-      expect(GAME_HEIGHT).toBeGreaterThan(0)
-      expect(GAME_WIDTH % CELL_SIZE).toBe(0)
-      expect(GAME_HEIGHT % CELL_SIZE).toBe(0)
+      const gameSize = getGameSize(DEFAULT_GRID_SIZE)
+      expect(gameSize.width).toBeGreaterThan(0)
+      expect(gameSize.height).toBeGreaterThan(0)
+      expect(gameSize.width % CELL_SIZE).toBe(0)
+      expect(gameSize.height % CELL_SIZE).toBe(0)
     })
   })
 
@@ -48,9 +49,9 @@ describe('Constants', () => {
             expect(wall).toHaveProperty('x')
             expect(wall).toHaveProperty('y')
             expect(wall.x).toBeGreaterThanOrEqual(0)
-            expect(wall.x).toBeLessThan(GRID_SIZE)
+            expect(wall.x).toBeLessThan(DEFAULT_GRID_SIZE)
             expect(wall.y).toBeGreaterThanOrEqual(0)
-            expect(wall.y).toBeLessThan(GRID_SIZE)
+            expect(wall.y).toBeLessThan(DEFAULT_GRID_SIZE)
           })
         }
       })
@@ -181,7 +182,7 @@ describe('Constants', () => {
 
     it('should have reasonable values', () => {
       expect(TELEPORT_COOLDOWN).toBeLessThan(30000) // Less than 30 seconds
-      expect(TELEPORT_RANGE).toBeLessThan(GRID_SIZE) // Less than grid size
+      expect(TELEPORT_RANGE).toBeLessThan(DEFAULT_GRID_SIZE) // Less than grid size
     })
   })
 })

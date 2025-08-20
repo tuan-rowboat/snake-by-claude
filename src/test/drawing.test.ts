@@ -128,7 +128,7 @@ describe('Drawing Utils', () => {
 
   describe('drawGrid', () => {
     it('should draw grid lines', () => {
-      drawGrid(mockCtx)
+      drawGrid(mockCtx, 20)
       
       expect(mockCtx.strokeStyle).toBe('rgba(255, 255, 255, 0.1)')
       expect(mockCtx.lineWidth).toBe(1)
@@ -167,7 +167,7 @@ describe('Drawing Utils', () => {
 
   describe('drawPauseOverlay', () => {
     it('should draw pause overlay', () => {
-      drawPauseOverlay(mockCtx)
+      drawPauseOverlay(mockCtx, 20)
       
       // Should call fillRect for overlay
       expect(mockCtx.fillRect).toHaveBeenCalled()
@@ -182,7 +182,7 @@ describe('Drawing Utils', () => {
     })
 
     it('should center text correctly', () => {
-      drawPauseOverlay(mockCtx)
+      drawPauseOverlay(mockCtx, 20)
       
       expect(mockCtx.textAlign).toBe('center')
       expect(mockCtx.textBaseline).toBe('middle')

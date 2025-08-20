@@ -12,7 +12,8 @@ describe('GameMenu Component', () => {
     speed: 'normal',
     wallPattern: 'simple',
     maxFoods: 3,
-    teleportEnabled: false
+    teleportEnabled: false,
+    gridSize: 20
   }
 
   const defaultProps = {
@@ -64,21 +65,23 @@ describe('GameMenu Component', () => {
     
     const wrapper = mount(GameMenu, { props: multiplayerProps })
     
-    expect(wrapper.text()).toContain('Player 1 Color')
-    expect(wrapper.text()).toContain('Player 2 Color')
+    expect(wrapper.text()).toContain('Player Colors')
+    expect(wrapper.text()).toContain('P1:')
+    expect(wrapper.text()).toContain('P2:')
   })
 
   it('should hide player 2 color selection in single player mode', () => {
     const wrapper = mount(GameMenu, { props: defaultProps })
     
-    expect(wrapper.text()).toContain('Snake Color')
-    expect(wrapper.text()).not.toContain('Player 2 Color')
+    expect(wrapper.text()).toContain('Colors')
+    expect(wrapper.text()).toContain('Snake:')
+    expect(wrapper.text()).not.toContain('P2:')
   })
 
   it('should show background color in single player mode', () => {
     const wrapper = mount(GameMenu, { props: defaultProps })
     
-    expect(wrapper.text()).toContain('Background Color')
+    expect(wrapper.text()).toContain('BG:')
   })
 
   it('should hide background color in multiplayer mode', () => {
@@ -126,7 +129,7 @@ describe('GameMenu Component', () => {
     const wrapper = mount(GameMenu, { props: defaultProps })
     
     expect(wrapper.text()).toContain('Teleport Mode')
-    expect(wrapper.text()).toContain('Jump through walls or across the map')
+    expect(wrapper.text()).toContain('Jump through walls')
   })
 
   it('should emit teleport setting change', async () => {
@@ -154,7 +157,7 @@ describe('GameMenu Component', () => {
     expect(optionTexts).toContain('Cross')
     expect(optionTexts).toContain('Maze')
     expect(optionTexts).toContain('Random')
-    expect(optionTexts).toContain('Moving Walls')
+    expect(optionTexts).toContain('Moving')
   })
 
   it('should show speed options', () => {
@@ -177,9 +180,8 @@ describe('GameMenu Component', () => {
     const wrapper = mount(GameMenu, { props: defaultProps })
     
     // The controls are only shown in multiplayer mode
-    expect(wrapper.text()).toContain('Food Values & Effects')
-    expect(wrapper.text()).toContain('Regular Foods')
-    expect(wrapper.text()).toContain('Special Foods')
+    expect(wrapper.text()).toContain('🍎 Food Guide')
+    expect(wrapper.text()).toContain('Special Effects:')
   })
 
   it('should show multiplayer instructions in multiplayer mode', () => {
@@ -190,8 +192,8 @@ describe('GameMenu Component', () => {
     
     const wrapper = mount(GameMenu, { props: multiplayerProps })
     
-    expect(wrapper.text()).toContain('Player 1 (Arrow Keys)')
-    expect(wrapper.text()).toContain('Player 2 (WASD Keys)')
+    expect(wrapper.text()).toContain('P1: Arrow Keys')
+    expect(wrapper.text()).toContain('P2: WASD')
     expect(wrapper.text()).toContain('🎮 Controls')
   })
 })
