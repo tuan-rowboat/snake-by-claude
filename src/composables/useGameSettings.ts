@@ -11,7 +11,8 @@ export function useGameSettings() {
     speed: 'normal',
     wallPattern: 'simple',
     maxFoods: 3,
-    teleportEnabled: false
+    teleportEnabled: false,
+    gridSize: 20
   })
 
   // Auto-save settings to localStorage
