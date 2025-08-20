@@ -228,6 +228,14 @@
           <span>🔥</span>
           <span class="text-orange-400">Bullet: 5 Shots! Press S to fire (+20 pts)</span>
         </div>
+        <div class="flex items-center gap-1 col-span-3">
+          <span>🧪</span>
+          <span class="text-green-300">Growth Potion: +1-3 Length! (+15 pts + bonus)</span>
+        </div>
+        <div class="flex items-center gap-1 col-span-3">
+          <span>💊</span>
+          <span class="text-pink-400">Shrink Pill: -1-3 Length! (-5 pts)</span>
+        </div>
       </div>
     </div>
     

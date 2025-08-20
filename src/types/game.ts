@@ -13,7 +13,7 @@ export interface Food extends Position {
   type: FoodType
 }
 
-export type FoodType = 'apple' | 'golden' | 'berry' | 'super' | 'banana' | 'cherry' | 'watermelon' | 'mushroom' | 'poison' | 'bullet'
+export type FoodType = 'apple' | 'golden' | 'berry' | 'super' | 'banana' | 'cherry' | 'watermelon' | 'mushroom' | 'poison' | 'bullet' | 'growth' | 'shrink'
 
 export interface FoodProperties {
   color: string
@@ -21,7 +21,7 @@ export interface FoodProperties {
   spawnRate: number
   shape: ShapeType
   emoji: string
-  effect?: 'double' | 'shrink' | 'bullet'
+  effect?: 'double' | 'shrink' | 'bullet' | 'randomGrow' | 'randomShrink'
 }
 
 export type ShapeType = 'circle' | 'triangle' | 'diamond' | 'star' | 'rectangle' | 'square'

@@ -261,6 +261,22 @@ export const updateSnakeWithFood = (
     const lastSegment = newSnake[newSnake.length - 1]
     newSnake.push({ ...lastSegment })
     return { newSnake, scoreChange: points, bulletCount: 5 }
+  } else if (foodProps.effect === 'randomGrow') {
+    // Growth Potion - randomly add 1-3 segments
+    const randomGrowth = Math.floor(Math.random() * 3) + 1 // 1-3
+    const lastSegment = newSnake[newSnake.length - 1]
+    for (let i = 0; i < randomGrowth; i++) {
+      newSnake.push({ ...lastSegment })
+    }
+    return { newSnake, scoreChange: points + randomGrowth * 5, bulletCount: 0 } // Bonus points for growth
+  } else if (foodProps.effect === 'randomShrink') {
+    // Shrink Pill - randomly remove 1-3 segments
+    const randomShrink = Math.floor(Math.random() * 3) + 1 // 1-3
+    const minLength = 3 // Keep minimum length
+    for (let i = 0; i < randomShrink && newSnake.length > minLength; i++) {
+      newSnake.pop()
+    }
+    return { newSnake, scoreChange: points, bulletCount: 0 }
   } else {
     // Normal food - grow snake by adding a segment
     const lastSegment = newSnake[newSnake.length - 1]
