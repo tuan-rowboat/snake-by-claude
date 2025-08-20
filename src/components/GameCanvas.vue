@@ -21,8 +21,8 @@
     <div class="relative rounded-lg overflow-hidden shadow-2xl">
       <canvas
         ref="canvasRef"
-        :width="GAME_WIDTH"
-        :height="GAME_HEIGHT"
+        :width="gameSize.width"
+        :height="gameSize.height"
         class="border-2 border-gray-700"
       />
     </div>
@@ -73,9 +73,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, type Ref } from 'vue'
+import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import type { Position, Food, Bullet, GameState, GameMode, Direction, GameSettings } from '../types/game'
-import { GAME_WIDTH, GAME_HEIGHT, FOOD_TYPES } from '../utils/constants'
+import { FOOD_TYPES, getGameSize } from '../utils/constants'
 import { drawShape, drawSnakeEyes, drawGrid, drawWalls, drawPauseOverlay } from '../utils/drawing'
 
 interface Props {
@@ -101,6 +101,9 @@ const props = defineProps<Props>()
 
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 
+// Computed game size based on grid size
+const gameSize = computed(() => getGameSize(props.settings.gridSize))
+
 const draw = (): void => {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -110,10 +113,10 @@ const draw = (): void => {
   
   // Clear canvas
   ctx.fillStyle = props.settings.bgColor
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT)
+  ctx.fillRect(0, 0, gameSize.value.width, gameSize.value.height)
   
   // Draw grid
-  drawGrid(ctx)
+  drawGrid(ctx, props.settings.gridSize)
   
   // Draw walls
   drawWalls(ctx, props.walls)
@@ -184,7 +187,7 @@ const draw = (): void => {
   
   // Draw pause overlay
   if (props.gameState === 'paused') {
-    drawPauseOverlay(ctx)
+    drawPauseOverlay(ctx, props.settings.gridSize)
   }
 }
 

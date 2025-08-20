@@ -47,6 +47,7 @@ export interface GameSettings {
   wallPattern: WallPattern
   maxFoods: number
   teleportEnabled: boolean
+  gridSize: number
 }
 
 export interface Bullet extends Position {

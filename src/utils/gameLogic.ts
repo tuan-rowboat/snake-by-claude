@@ -1,18 +1,18 @@
 import type { Position, Direction, Food, FoodType, Bullet } from '../types/game'
-import { GRID_SIZE, FOOD_TYPES } from './constants'
+import { DEFAULT_GRID_SIZE, FOOD_TYPES } from './constants'
 
-export const generateRandomWalls = (count: number = 15): Position[] => {
+export const generateRandomWalls = (count: number = 15, gridSize: number = DEFAULT_GRID_SIZE): Position[] => {
   const walls: Position[] = []
   const forbidden: Position[] = [
-    { x: 10, y: 10 }, // Starting position player 1
-    { x: 8, y: 8 },   // Starting position player 2
-    { x: 15, y: 15 }  // Initial food position
+    { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) }, // Starting position player 1
+    { x: Math.floor(gridSize / 2) - 2, y: Math.floor(gridSize / 2) - 2 },   // Starting position player 2
+    { x: Math.floor(gridSize * 0.75), y: Math.floor(gridSize * 0.75) }  // Initial food position
   ]
   
   while (walls.length < count) {
     const wall: Position = {
-      x: Math.floor(Math.random() * GRID_SIZE),
-      y: Math.floor(Math.random() * GRID_SIZE)
+      x: Math.floor(Math.random() * gridSize),
+      y: Math.floor(Math.random() * gridSize)
     }
     
     // Check if wall is not in forbidden positions or already exists
@@ -32,8 +32,8 @@ export const generateRandomWalls = (count: number = 15): Position[] => {
           x: wall.x + dir.x,
           y: wall.y + dir.y
         }
-        if (adjacent.x >= 0 && adjacent.x < GRID_SIZE && 
-            adjacent.y >= 0 && adjacent.y < GRID_SIZE &&
+        if (adjacent.x >= 0 && adjacent.x < gridSize && 
+            adjacent.y >= 0 && adjacent.y < gridSize &&
             !forbidden.some(f => f.x === adjacent.x && f.y === adjacent.y)) {
           walls.push(adjacent)
         }
@@ -44,12 +44,12 @@ export const generateRandomWalls = (count: number = 15): Position[] => {
   return walls
 }
 
-export const generateMovingWalls = (count: number = 8): Position[] => {
+export const generateMovingWalls = (count: number = 8, gridSize: number = DEFAULT_GRID_SIZE): Position[] => {
   const walls: Position[] = []
   const forbidden: Position[] = [
-    { x: 10, y: 10 }, // Starting position player 1
-    { x: 8, y: 8 },   // Starting position player 2
-    { x: 15, y: 15 }  // Initial food position
+    { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) }, // Starting position player 1
+    { x: Math.floor(gridSize / 2) - 2, y: Math.floor(gridSize / 2) - 2 },   // Starting position player 2
+    { x: Math.floor(gridSize * 0.75), y: Math.floor(gridSize * 0.75) }  // Initial food position
   ]
   
   // Create moving wall patterns - smaller groups that can move around
@@ -64,8 +64,8 @@ export const generateMovingWalls = (count: number = 8): Position[] => {
   let attempts = 0
   while (walls.length < count && attempts < 50) {
     const pattern = patterns[Math.floor(Math.random() * patterns.length)]
-    const baseX = Math.floor(Math.random() * (GRID_SIZE - 3))
-    const baseY = Math.floor(Math.random() * (GRID_SIZE - 3))
+    const baseX = Math.floor(Math.random() * (gridSize - 3))
+    const baseY = Math.floor(Math.random() * (gridSize - 3))
     
     const newWalls = pattern.map(offset => ({
       x: baseX + offset.x,
@@ -76,7 +76,7 @@ export const generateMovingWalls = (count: number = 8): Position[] => {
     const hasConflict = newWalls.some(wall =>
       forbidden.some(f => f.x === wall.x && f.y === wall.y) ||
       walls.some(w => w.x === wall.x && w.y === wall.y) ||
-      wall.x < 0 || wall.x >= GRID_SIZE || wall.y < 0 || wall.y >= GRID_SIZE
+      wall.x < 0 || wall.x >= gridSize || wall.y < 0 || wall.y >= gridSize
     )
     
     if (!hasConflict) {
@@ -112,8 +112,8 @@ export const moveWalls = (currentWalls: Position[], snakePositions: Position[], 
     
     // Check if the moved group is valid (within bounds and not colliding with snakes)
     const isValidMove = movedGroup.every(wall =>
-      wall.x >= 0 && wall.x < GRID_SIZE &&
-      wall.y >= 0 && wall.y < GRID_SIZE &&
+      wall.x >= 0 && wall.x < DEFAULT_GRID_SIZE &&
+      wall.y >= 0 && wall.y < DEFAULT_GRID_SIZE &&
       !occupiedPositions.some(pos => pos.x === wall.x && pos.y === wall.y)
     )
     
@@ -169,7 +169,8 @@ export const generateFood = (
   snakePositions: Position[], 
   foodPositions: Position[], 
   wallPositions: Position[],
-  snake2Positions: Position[] = []
+  snake2Positions: Position[] = [],
+  gridSize: number = DEFAULT_GRID_SIZE
 ): Food => {
   const occupiedPositions: Position[] = [
     ...snakePositions,
@@ -182,8 +183,8 @@ export const generateFood = (
   let attempts = 0
   do {
     newFood = {
-      x: Math.floor(Math.random() * GRID_SIZE),
-      y: Math.floor(Math.random() * GRID_SIZE),
+      x: Math.floor(Math.random() * gridSize),
+      y: Math.floor(Math.random() * gridSize),
       type: 'apple'
     }
     attempts++
@@ -208,10 +209,11 @@ export const checkCollisions = (
   head: Position, 
   snake: Position[], 
   walls: Position[], 
-  otherSnake: Position[] = []
+  otherSnake: Position[] = [],
+  gridSize: number = DEFAULT_GRID_SIZE
 ): boolean => {
   // Check boundary collision
-  if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+  if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) {
     return true
   }
   
@@ -315,14 +317,15 @@ export const findValidTeleportPositions = (
   snake: Position[], 
   walls: Position[], 
   otherSnake: Position[] = [],
-  minDistance: number = 5
+  minDistance: number = 5,
+  gridSize: number = DEFAULT_GRID_SIZE
 ): Position[] => {
   const head = snake[0]
   const validPositions: Position[] = []
   const occupiedPositions = [...snake, ...walls, ...otherSnake]
   
-  for (let x = 0; x < GRID_SIZE; x++) {
-    for (let y = 0; y < GRID_SIZE; y++) {
+  for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < gridSize; y++) {
       const position = { x, y }
       
       // Check if position is not occupied
@@ -343,9 +346,10 @@ export const findValidTeleportPositions = (
 export const executeRandomTeleport = (
   snake: Position[], 
   walls: Position[], 
-  otherSnake: Position[] = []
+  otherSnake: Position[] = [],
+  gridSize: number = DEFAULT_GRID_SIZE
 ): Position[] => {
-  const validPositions = findValidTeleportPositions(snake, walls, otherSnake)
+  const validPositions = findValidTeleportPositions(snake, walls, otherSnake, 5, gridSize)
   
   if (validPositions.length === 0) {
     // No valid teleport positions, return original snake
@@ -366,7 +370,8 @@ export const executeDirectionalTeleport = (
   snake: Position[], 
   direction: Direction, 
   walls: Position[], 
-  otherSnake: Position[] = []
+  otherSnake: Position[] = [],
+  gridSize: number = DEFAULT_GRID_SIZE
 ): Position => {
   const head = snake[0]
   let teleportPosition = { ...head }
@@ -377,10 +382,10 @@ export const executeDirectionalTeleport = (
     teleportPosition.y += direction.y
     
     // Wrap around boundaries (teleport through map edges)
-    if (teleportPosition.x < 0) teleportPosition.x = GRID_SIZE - 1
-    if (teleportPosition.x >= GRID_SIZE) teleportPosition.x = 0
-    if (teleportPosition.y < 0) teleportPosition.y = GRID_SIZE - 1
-    if (teleportPosition.y >= GRID_SIZE) teleportPosition.y = 0
+    if (teleportPosition.x < 0) teleportPosition.x = gridSize - 1
+    if (teleportPosition.x >= gridSize) teleportPosition.x = 0
+    if (teleportPosition.y < 0) teleportPosition.y = gridSize - 1
+    if (teleportPosition.y >= gridSize) teleportPosition.y = 0
     
     // Check if we hit a wall or other obstacle
     const isBlocked = walls.some(wall => wall.x === teleportPosition.x && wall.y === teleportPosition.y) ||
@@ -399,8 +404,8 @@ export const executeDirectionalTeleport = (
         { x: teleportPosition.x + 1, y: teleportPosition.y - 1 },
         { x: teleportPosition.x - 1, y: teleportPosition.y + 1 }
       ].filter(pos => 
-        pos.x >= 0 && pos.x < GRID_SIZE && 
-        pos.y >= 0 && pos.y < GRID_SIZE &&
+        pos.x >= 0 && pos.x < gridSize && 
+        pos.y >= 0 && pos.y < gridSize &&
         !walls.some(wall => wall.x === pos.x && wall.y === pos.y) &&
         !otherSnake.some(segment => segment.x === pos.x && segment.y === pos.y) &&
         !snake.slice(1).some(segment => segment.x === pos.x && segment.y === pos.y)
@@ -414,7 +419,7 @@ export const executeDirectionalTeleport = (
     }
     
     // Safety check to prevent infinite loop
-    if (Math.abs(teleportPosition.x - head.x) + Math.abs(teleportPosition.y - head.y) > GRID_SIZE * 2) {
+    if (Math.abs(teleportPosition.x - head.x) + Math.abs(teleportPosition.y - head.y) > gridSize * 2) {
       break
     }
   }
@@ -432,7 +437,7 @@ export const createBullet = (snakeHead: Position, direction: Direction, playerId
   }
 }
 
-export const moveBullets = (bullets: Bullet[]): Bullet[] => {
+export const moveBullets = (bullets: Bullet[], gridSize: number = DEFAULT_GRID_SIZE): Bullet[] => {
   return bullets
     .map(bullet => ({
       ...bullet,
@@ -440,8 +445,8 @@ export const moveBullets = (bullets: Bullet[]): Bullet[] => {
       y: bullet.y + bullet.direction.y
     }))
     .filter(bullet => 
-      bullet.x >= 0 && bullet.x < GRID_SIZE && 
-      bullet.y >= 0 && bullet.y < GRID_SIZE
+      bullet.x >= 0 && bullet.x < gridSize && 
+      bullet.y >= 0 && bullet.y < gridSize
     )
 }
 

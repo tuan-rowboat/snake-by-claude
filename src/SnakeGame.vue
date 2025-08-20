@@ -74,7 +74,8 @@ const settings: Ref<GameSettings> = ref({
   speed: 'normal',
   wallPattern: 'simple',
   maxFoods: 3,
-  teleportEnabled: false
+  teleportEnabled: false,
+  gridSize: 20
 })
 
 const gameProgress: Ref<GameProgress> = ref({
@@ -150,9 +151,9 @@ const startGame = (): void => {
   // Set walls based on pattern
   let newWalls: Position[] = []
   if (settings.value.wallPattern === 'random') {
-    newWalls = generateRandomWalls()
+    newWalls = generateRandomWalls(15, settings.value.gridSize)
   } else if (settings.value.wallPattern === 'moving') {
-    newWalls = generateMovingWalls()
+    newWalls = generateMovingWalls(8, settings.value.gridSize)
   } else if (settings.value.wallPattern !== 'none') {
     newWalls = WALL_PATTERNS[settings.value.wallPattern]
   }
@@ -165,7 +166,8 @@ const startGame = (): void => {
       gameProgress.value.snake,
       initialFoods,
       gameProgress.value.walls,
-      gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : []
+      gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : [],
+      settings.value.gridSize
     ))
   }
   gameProgress.value.foods = initialFoods
@@ -204,7 +206,7 @@ const gameLoop = (): void => {
   if (gameState.value !== 'playing') return
 
   // Move bullets
-  gameProgress.value.bullets = moveBullets(gameProgress.value.bullets)
+  gameProgress.value.bullets = moveBullets(gameProgress.value.bullets, settings.value.gridSize)
   
   // Check bullet-wall collisions
   const { remainingBullets, destroyedWalls } = checkBulletWallCollisions(gameProgress.value.bullets, gameProgress.value.walls)
@@ -267,7 +269,7 @@ const gameLoop = (): void => {
     const head = newSnake[0]
     
     // Check collisions
-    if (checkCollisions(head, gameProgress.value.snake, gameProgress.value.walls)) {
+    if (checkCollisions(head, gameProgress.value.snake, gameProgress.value.walls, [], settings.value.gridSize)) {
       gameState.value = 'gameOver'
       return
     }
@@ -292,7 +294,9 @@ const gameLoop = (): void => {
         newFoods.push(generateFood(
           gameProgress.value.snake,
           newFoods,
-          gameProgress.value.walls
+          gameProgress.value.walls,
+          [],
+          settings.value.gridSize
         ))
       }
       gameProgress.value.foods = newFoods
@@ -312,10 +316,10 @@ const gameLoop = (): void => {
     let player2Dead = false
     
     // Check collisions for both players
-    if (checkCollisions(head1, gameProgress.value.snake, gameProgress.value.walls, gameProgress.value.snake2)) {
+    if (checkCollisions(head1, gameProgress.value.snake, gameProgress.value.walls, gameProgress.value.snake2, settings.value.gridSize)) {
       player1Dead = true
     }
-    if (checkCollisions(head2, gameProgress.value.snake2, gameProgress.value.walls, gameProgress.value.snake)) {
+    if (checkCollisions(head2, gameProgress.value.snake2, gameProgress.value.walls, gameProgress.value.snake, settings.value.gridSize)) {
       player2Dead = true
     }
     
@@ -387,7 +391,8 @@ const gameLoop = (): void => {
           gameProgress.value.snake,
           newFoods,
           gameProgress.value.walls,
-          gameProgress.value.snake2
+          gameProgress.value.snake2,
+          settings.value.gridSize
         ))
       }
       gameProgress.value.foods = newFoods
@@ -400,7 +405,8 @@ const gameLoop = (): void => {
       gameProgress.value.snake,
       gameProgress.value.foods,
       gameProgress.value.walls,
-      gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : []
+      gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : [],
+      settings.value.gridSize
     ))
   }
 }
@@ -518,7 +524,8 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         const newSnake = executeRandomTeleport(
           gameProgress.value.snake,
           gameProgress.value.walls,
-          gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : []
+          gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : [],
+          settings.value.gridSize
         )
         gameProgress.value.snake = newSnake
         gameProgress.value.teleportCooldown = TELEPORT_COOLDOWN
@@ -529,7 +536,8 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           gameProgress.value.snake,
           gameProgress.value.direction,
           gameProgress.value.walls,
-          gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : []
+          gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : [],
+          settings.value.gridSize
         )
         gameProgress.value.snake[0] = teleportPosition
         gameProgress.value.teleportCooldown = TELEPORT_COOLDOWN
@@ -543,7 +551,8 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           const newSnake2 = executeRandomTeleport(
             gameProgress.value.snake2,
             gameProgress.value.walls,
-            gameProgress.value.snake
+            gameProgress.value.snake,
+            settings.value.gridSize
           )
           gameProgress.value.snake2 = newSnake2
           gameProgress.value.teleportCooldown2 = TELEPORT_COOLDOWN
@@ -554,7 +563,8 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             gameProgress.value.snake2,
             gameProgress.value.direction2,
             gameProgress.value.walls,
-            gameProgress.value.snake
+            gameProgress.value.snake,
+            settings.value.gridSize
           )
           gameProgress.value.snake2[0] = teleportPosition
           gameProgress.value.teleportCooldown2 = TELEPORT_COOLDOWN

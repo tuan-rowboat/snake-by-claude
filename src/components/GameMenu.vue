@@ -155,6 +155,24 @@
       </div>
     </div>
     
+    <div class="mt-4">
+      <label class="block text-sm font-medium mb-2">Canvas Size</label>
+      <div class="grid grid-cols-4 gap-2">
+        <button
+          v-for="(size, label) in GRID_SIZES"
+          :key="label"
+          @click="updateSettings('gridSize', size)"
+          :data-testid="`grid-size-${label}`"
+          :class="[
+            'py-2 px-3 rounded text-sm font-medium transition-all',
+            settings.gridSize === size ? 'bg-green-600 scale-105' : 'bg-gray-700'
+          ]"
+        >
+          {{ label.charAt(0).toUpperCase() + label.slice(1) }}
+        </button>
+      </div>
+    </div>
+    
     <!-- Teleport Feature Toggle -->
     <div class="mt-4">
       <div class="flex items-center justify-between p-3 bg-gray-700 rounded border border-gray-600">
@@ -253,7 +271,7 @@
 
 <script setup lang="ts">
 import type { GameMode, GameSettings } from '../types/game'
-import { HEAD_SHAPES, HEAD_COLORS, BG_COLORS, SPEEDS, FOOD_TYPES } from '../utils/constants'
+import { HEAD_SHAPES, HEAD_COLORS, BG_COLORS, SPEEDS, FOOD_TYPES, GRID_SIZES } from '../utils/constants'
 
 interface Props {
   gameMode: GameMode

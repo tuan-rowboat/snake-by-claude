@@ -1,10 +1,22 @@
 import type { FoodType, FoodProperties, HeadShape, SpeedType, WallPattern, Position } from '../types/game'
 
 // Game constants
-export const GRID_SIZE: number = 20
+export const DEFAULT_GRID_SIZE: number = 20
 export const CELL_SIZE: number = 25
-export const GAME_WIDTH: number = GRID_SIZE * CELL_SIZE
-export const GAME_HEIGHT: number = GRID_SIZE * CELL_SIZE
+
+// Grid size options
+export const GRID_SIZES: Record<string, number> = {
+  small: 15,
+  normal: 20,
+  large: 25,
+  huge: 30
+}
+
+// Dynamic game size calculation
+export const getGameSize = (gridSize: number) => ({
+  width: gridSize * CELL_SIZE,
+  height: gridSize * CELL_SIZE
+})
 
 // Food types with their properties
 export const FOOD_TYPES: Record<FoodType, FoodProperties> = {

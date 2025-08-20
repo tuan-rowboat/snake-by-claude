@@ -1,5 +1,5 @@
 import type { ShapeType, HeadShape, Direction, Position } from '../types/game'
-import { CELL_SIZE, GAME_WIDTH, GAME_HEIGHT, GRID_SIZE } from './constants'
+import { CELL_SIZE, getGameSize } from './constants'
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeType, x: number, y: number, size: number, color: string | CanvasGradient): void => {
   ctx.fillStyle = color
@@ -82,18 +82,19 @@ export const drawSnakeEyes = (
   }
 }
 
-export const drawGrid = (ctx: CanvasRenderingContext2D): void => {
+export const drawGrid = (ctx: CanvasRenderingContext2D, gridSize: number): void => {
+  const gameSize = getGameSize(gridSize)
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
   ctx.lineWidth = 1
-  for (let i = 0; i <= GRID_SIZE; i++) {
+  for (let i = 0; i <= gridSize; i++) {
     ctx.beginPath()
     ctx.moveTo(i * CELL_SIZE, 0)
-    ctx.lineTo(i * CELL_SIZE, GAME_HEIGHT)
+    ctx.lineTo(i * CELL_SIZE, gameSize.height)
     ctx.stroke()
     
     ctx.beginPath()
     ctx.moveTo(0, i * CELL_SIZE)
-    ctx.lineTo(GAME_WIDTH, i * CELL_SIZE)
+    ctx.lineTo(gameSize.width, i * CELL_SIZE)
     ctx.stroke()
   }
 }
@@ -107,13 +108,14 @@ export const drawWalls = (ctx: CanvasRenderingContext2D, walls: Position[]): voi
   })
 }
 
-export const drawPauseOverlay = (ctx: CanvasRenderingContext2D): void => {
+export const drawPauseOverlay = (ctx: CanvasRenderingContext2D, gridSize: number): void => {
+  const gameSize = getGameSize(gridSize)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT)
+  ctx.fillRect(0, 0, gameSize.width, gameSize.height)
   
   ctx.fillStyle = 'white'
   ctx.font = 'bold 24px Arial'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText('PAUSED', GAME_WIDTH / 2, GAME_HEIGHT / 2)
+  ctx.fillText('PAUSED', gameSize.width / 2, gameSize.height / 2)
 }
