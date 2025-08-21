@@ -981,6 +981,12 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           )
           
           if (collectedFoods.length > 0) {
+            // Create lightning animation from snake to nearby foods
+            gameCanvasRef.value?.createLightningToFoods(
+              gameProgress.value.snake[0],
+              collectedFoods.map(f => ({ x: f.x, y: f.y }))
+            )
+            
             // Process each collected food
             for (const food of collectedFoods) {
               const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
@@ -1034,6 +1040,12 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           )
           
           if (collectedFoods.length > 0) {
+            // Create lightning animation from snake to nearby foods
+            gameCanvasRef.value?.createLightningToFoods(
+              gameProgress.value.snake[0],
+              collectedFoods.map(f => ({ x: f.x, y: f.y }))
+            )
+            
             // Process each collected food
             for (const food of collectedFoods) {
               const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
@@ -1091,6 +1103,12 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         )
         
         if (collectedFoods.length > 0) {
+          // Create lightning animation from snake to nearby foods
+          gameCanvasRef.value?.createLightningToFoods(
+            gameProgress.value.snake2[0],
+            collectedFoods.map(f => ({ x: f.x, y: f.y }))
+          )
+          
           // Process each collected food
           for (const food of collectedFoods) {
             const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(

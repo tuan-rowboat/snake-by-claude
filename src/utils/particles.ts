@@ -15,9 +15,23 @@ export interface Particle {
   alpha: number
 }
 
+export interface Lightning {
+  id: string
+  startX: number
+  startY: number
+  endX: number
+  endY: number
+  life: number
+  maxLife: number
+  segments: Array<{ x: number, y: number }>
+  alpha: number
+}
+
 export class ParticleSystem {
   particles: Particle[] = []
+  lightnings: Lightning[] = []
   private nextId = 0
+  private nextLightningId = 0
 
   update(deltaTime: number): void {
     this.particles = this.particles.filter(particle => {
@@ -39,6 +53,22 @@ export class ParticleSystem {
       }
       
       return particle.life > 0
+    })
+
+    // Update lightning effects
+    this.lightnings = this.lightnings.filter(lightning => {
+      lightning.life -= deltaTime
+      lightning.alpha = Math.max(0, lightning.life / lightning.maxLife)
+      
+      // Regenerate lightning segments for flickering effect
+      if (Math.random() < 0.3) {
+        lightning.segments = this.generateLightningPath(
+          lightning.startX, lightning.startY,
+          lightning.endX, lightning.endY
+        )
+      }
+      
+      return lightning.life > 0
     })
   }
 
@@ -84,6 +114,47 @@ export class ParticleSystem {
             particle.size
           )
           break
+      }
+      
+      ctx.restore()
+    })
+
+    // Draw lightning effects
+    this.lightnings.forEach(lightning => {
+      ctx.save()
+      ctx.globalAlpha = lightning.alpha
+      ctx.strokeStyle = '#00ffff'
+      ctx.shadowColor = '#00ffff'
+      ctx.shadowBlur = 5
+      ctx.lineWidth = 2
+      
+      // Draw main lightning bolt
+      ctx.beginPath()
+      if (lightning.segments.length > 0) {
+        ctx.moveTo(lightning.segments[0].x, lightning.segments[0].y)
+        for (let i = 1; i < lightning.segments.length; i++) {
+          ctx.lineTo(lightning.segments[i].x, lightning.segments[i].y)
+        }
+      }
+      ctx.stroke()
+      
+      // Draw secondary branches for more realistic effect
+      ctx.lineWidth = 1
+      ctx.globalAlpha = lightning.alpha * 0.6
+      for (let i = 1; i < lightning.segments.length - 1; i += 2) {
+        if (Math.random() < 0.3) {
+          const segment = lightning.segments[i]
+          const angle = Math.random() * Math.PI * 2
+          const length = 10 + Math.random() * 15
+          
+          ctx.beginPath()
+          ctx.moveTo(segment.x, segment.y)
+          ctx.lineTo(
+            segment.x + Math.cos(angle) * length,
+            segment.y + Math.sin(angle) * length
+          )
+          ctx.stroke()
+        }
       }
       
       ctx.restore()
@@ -210,7 +281,61 @@ export class ParticleSystem {
     }
   }
 
+  createLightning(startPos: Position, endPos: Position): void {
+    const startX = startPos.x * CELL_SIZE + CELL_SIZE / 2
+    const startY = startPos.y * CELL_SIZE + CELL_SIZE / 2
+    const endX = endPos.x * CELL_SIZE + CELL_SIZE / 2
+    const endY = endPos.y * CELL_SIZE + CELL_SIZE / 2
+    
+    const lightning: Lightning = {
+      id: `lightning-${this.nextLightningId++}`,
+      startX,
+      startY,
+      endX,
+      endY,
+      life: 500, // 0.5 seconds
+      maxLife: 500,
+      segments: this.generateLightningPath(startX, startY, endX, endY),
+      alpha: 1
+    }
+    
+    this.lightnings.push(lightning)
+  }
+
+  private generateLightningPath(startX: number, startY: number, endX: number, endY: number): Array<{ x: number, y: number }> {
+    const segments: Array<{ x: number, y: number }> = []
+    
+    // Start with the starting point
+    segments.push({ x: startX, y: startY })
+    
+    const distance = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2)
+    const numSegments = Math.max(3, Math.floor(distance / 15)) // One segment every 15 pixels
+    
+    for (let i = 1; i < numSegments; i++) {
+      const progress = i / numSegments
+      
+      // Linear interpolation between start and end
+      const baseX = startX + (endX - startX) * progress
+      const baseY = startY + (endY - startY) * progress
+      
+      // Add random jitter perpendicular to the line
+      const perpAngle = Math.atan2(endY - startY, endX - startX) + Math.PI / 2
+      const jitterAmount = (Math.random() - 0.5) * 20 * (1 - Math.abs(progress - 0.5) * 2) // More jitter in the middle
+      
+      const jitteredX = baseX + Math.cos(perpAngle) * jitterAmount
+      const jitteredY = baseY + Math.sin(perpAngle) * jitterAmount
+      
+      segments.push({ x: jitteredX, y: jitteredY })
+    }
+    
+    // End with the ending point
+    segments.push({ x: endX, y: endY })
+    
+    return segments
+  }
+
   clear(): void {
     this.particles = []
+    this.lightnings = []
   }
 }

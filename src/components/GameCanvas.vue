@@ -317,5 +317,12 @@ onUnmounted(() => {
   }
 })
 
-defineExpose({ draw })
+// Expose method to create lightning effects
+const createLightningToFoods = (snakeHead: Position, nearbyFoods: Position[]) => {
+  nearbyFoods.forEach(food => {
+    particleSystem.createLightning(snakeHead, food)
+  })
+}
+
+defineExpose({ draw, createLightningToFoods })
 </script>
