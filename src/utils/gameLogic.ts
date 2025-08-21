@@ -513,7 +513,7 @@ export const checkBulletSnakeCollisions = (bullets: Bullet[], snake: Position[],
   return { remainingBullets, snakeHit, otherSnakeHit }
 }
 
-export const findNearbyFoods = (snakeHead: Position, foods: Food[], range: number = 3): Food[] => {
+export const findNearbyFoods = (snakeHead: Position, foods: Food[], range: number = 5): Food[] => {
   return foods.filter(food => {
     const distance = Math.abs(food.x - snakeHead.x) + Math.abs(food.y - snakeHead.y)
     return distance <= range
@@ -523,7 +523,7 @@ export const findNearbyFoods = (snakeHead: Position, foods: Food[], range: numbe
 export const collectNearbyFoods = (
   snakeHead: Position, 
   foods: Food[], 
-  range: number = 3
+  range: number = 5
 ): { collectedFoods: Food[], remainingFoods: Food[] } => {
   const collectedFoods: Food[] = []
   const remainingFoods: Food[] = []

@@ -977,7 +977,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           const { collectedFoods, remainingFoods } = collectNearbyFoods(
             gameProgress.value.snake[0], 
             gameProgress.value.foods, 
-            3
+            5
           )
           
           if (collectedFoods.length > 0) {
@@ -1036,7 +1036,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           const { collectedFoods, remainingFoods } = collectNearbyFoods(
             gameProgress.value.snake[0], 
             gameProgress.value.foods, 
-            3
+            5
           )
           
           if (collectedFoods.length > 0) {
@@ -1099,7 +1099,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         const { collectedFoods, remainingFoods } = collectNearbyFoods(
           gameProgress.value.snake2[0], 
           gameProgress.value.foods, 
-          3
+          5
         )
         
         if (collectedFoods.length > 0) {
