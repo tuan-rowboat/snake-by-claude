@@ -468,16 +468,25 @@
       
       <!-- Food Guide -->
       <div class="p-2 bg-gray-700 rounded">
-        <h4 class="text-xs font-bold mb-1">🍎 Foods</h4>
-        <div class="text-xs">
-          <div class="grid grid-cols-2 gap-0.5">
-            <span>🍎 1pt</span><span>🍌 2pt</span>
-            <span>🍒 3pt</span><span>🍉 5pt</span>
+        <h4 class="text-xs font-bold mb-1">🍎 Foods & Rates</h4>
+        <div class="text-xs space-y-0.5">
+          <!-- Main Foods with rates -->
+          <div class="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            <div>🍎 {{ FOOD_TYPES.apple.points }}pt ({{ Math.round(FOOD_TYPES.apple.spawnRate * 100) }}%)</div>
+            <div>🫐 {{ FOOD_TYPES.berry.points }}pt ({{ Math.round(FOOD_TYPES.berry.spawnRate * 100) }}%)</div>
+            <div>🍌 {{ FOOD_TYPES.banana.points }}pt ({{ Math.round(FOOD_TYPES.banana.spawnRate * 100) }}%)</div>
+            <div>🍒 {{ FOOD_TYPES.cherry.points }}pt ({{ Math.round(FOOD_TYPES.cherry.spawnRate * 100) }}%)</div>
           </div>
-          <div class="mt-1 space-y-0.5">
-            <div>🍄 +2 🔥 Bullets</div>
-            <div>🧲 1-5 Magnets</div>
-            <div>☠️ -2 💊 -1~3</div>
+          
+          <!-- Special Foods -->
+          <div class="mt-1 space-y-0.5 text-yellow-400">
+            <div>🧲 {{ FOOD_TYPES.magnet.points }}pt ({{ Math.round(FOOD_TYPES.magnet.spawnRate * 100) }}%) Magnets</div>
+            <div>🔥 {{ FOOD_TYPES.bullet.points }}pt ({{ Math.round(FOOD_TYPES.bullet.spawnRate * 100) }}%) Bullets</div>
+          </div>
+          
+          <!-- Rare Foods -->
+          <div class="mt-1 text-purple-400">
+            <div>⭐ {{ FOOD_TYPES.golden.points }}pt ({{ Math.round(FOOD_TYPES.golden.spawnRate * 100) }}%) 💎 {{ FOOD_TYPES.super.points }}pt ({{ Math.round(FOOD_TYPES.super.spawnRate * 100) }}%)</div>
           </div>
         </div>
       </div>
