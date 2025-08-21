@@ -539,3 +539,37 @@ export const collectNearbyFoods = (
   
   return { collectedFoods, remainingFoods }
 }
+
+export const checkBulletFoodCollisions = (bullets: Bullet[], foods: Food[]): {
+  remainingBullets: Bullet[],
+  remainingFoods: Food[],
+  eatenFoods: Array<{ food: Food, bullet: Bullet }>
+} => {
+  const remainingBullets: Bullet[] = []
+  const remainingFoods: Food[] = []
+  const eatenFoods: Array<{ food: Food, bullet: Bullet }> = []
+  
+  // Check each bullet for collisions with foods
+  for (const bullet of bullets) {
+    const bulletPos = `${bullet.x},${bullet.y}`
+    const hitFood = foods.find(food => `${food.x},${food.y}` === bulletPos)
+    
+    if (hitFood) {
+      eatenFoods.push({ food: hitFood, bullet })
+    } else {
+      remainingBullets.push(bullet)
+    }
+  }
+  
+  // Check each food - only keep foods that weren't hit
+  for (const food of foods) {
+    const foodPos = `${food.x},${food.y}`
+    const wasHit = eatenFoods.some(eaten => eaten.food === food)
+    
+    if (!wasHit) {
+      remainingFoods.push(food)
+    }
+  }
+  
+  return { remainingBullets, remainingFoods, eatenFoods }
+}

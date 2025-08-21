@@ -116,7 +116,7 @@ import { ref, onMounted, onUnmounted, watch, computed, type Ref } from 'vue'
 import type { GameState, GameMode, GameSettings, GameProgress, Position, Direction, Food } from './types/game'
 import type { Achievement, UnlockableReward } from './types/progression'
 import { SPEEDS, WALL_PATTERNS, FOOD_TYPES, TELEPORT_COOLDOWN } from './utils/constants'
-import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions, collectNearbyFoods } from './utils/gameLogic'
+import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions, collectNearbyFoods, checkBulletFoodCollisions } from './utils/gameLogic'
 import { loadHighScores, updateHighScores } from './utils/storage'
 import { ProgressionSystem } from './utils/progressionSystem'
 import { SoundManager } from './utils/soundManager'
@@ -455,6 +455,72 @@ const gameLoop = (): void => {
     gameProgress.value.walls = gameProgress.value.walls.filter(wall => 
       !destroyedWalls.some(destroyed => destroyed.x === wall.x && destroyed.y === wall.y)
     )
+  }
+  
+  // Check bullet-food collisions
+  const { remainingBullets: bulletsAfterFoodCheck, remainingFoods, eatenFoods } = checkBulletFoodCollisions(gameProgress.value.bullets, gameProgress.value.foods)
+  gameProgress.value.bullets = bulletsAfterFoodCheck
+  gameProgress.value.foods = remainingFoods
+  
+  // Process eaten foods by bullets
+  if (eatenFoods.length > 0) {
+    let totalScoreP1 = 0, totalScoreP2 = 0
+    let totalBulletCountP1 = 0, totalBulletCountP2 = 0
+    let totalMagnetCountP1 = 0, totalMagnetCountP2 = 0
+    
+    // Process each eaten food and track which bullet hit it
+    for (const { food, bullet } of eatenFoods) {
+      const foodProps = FOOD_TYPES[food.type]
+      const playerId = bullet.playerId
+      
+      // Attribute points and effects to the correct player
+      if (playerId === 1) {
+        totalScoreP1 += foodProps.points
+        if (foodProps.effect === 'bullet') {
+          totalBulletCountP1 += 5
+        } else if (foodProps.effect === 'magnet') {
+          totalMagnetCountP1 += Math.floor(Math.random() * 5) + 1 // 1-5 magnets
+        }
+      } else {
+        totalScoreP2 += foodProps.points
+        if (foodProps.effect === 'bullet') {
+          totalBulletCountP2 += 5
+        } else if (foodProps.effect === 'magnet') {
+          totalMagnetCountP2 += Math.floor(Math.random() * 5) + 1 // 1-5 magnets
+        }
+      }
+      
+      // Play appropriate food sound
+      if (food.type === 'golden') {
+        soundManager.playSound('eat_golden_food')
+      } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(food.type)) {
+        soundManager.playSound('eat_special_food')
+      } else {
+        soundManager.playSound('eat_food')
+      }
+    }
+    
+    // Apply effects to correct players
+    gameProgress.value.score += totalScoreP1
+    gameProgress.value.bulletCount += totalBulletCountP1
+    gameProgress.value.magnetCount += totalMagnetCountP1
+    
+    if (gameMode.value === 'multiplayer') {
+      gameProgress.value.score2 += totalScoreP2
+      gameProgress.value.bulletCount2 += totalBulletCountP2
+      gameProgress.value.magnetCount2 += totalMagnetCountP2
+    }
+    
+    // Generate new foods to replace eaten ones
+    while (gameProgress.value.foods.length < settings.value.maxFoods) {
+      gameProgress.value.foods.push(generateFood(
+        gameProgress.value.snake,
+        gameProgress.value.foods,
+        gameProgress.value.walls,
+        gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : [],
+        settings.value.gridSize
+      ))
+    }
   }
   
   // Check bullet-snake collisions

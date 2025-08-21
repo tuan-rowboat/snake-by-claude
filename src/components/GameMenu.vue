@@ -481,7 +481,7 @@
           <!-- Special Foods -->
           <div class="mt-1 space-y-0.5 text-yellow-400">
             <div>🧲 {{ FOOD_TYPES.magnet.points }}pt ({{ Math.round(FOOD_TYPES.magnet.spawnRate * 100) }}%) Magnets</div>
-            <div>🔥 {{ FOOD_TYPES.bullet.points }}pt ({{ Math.round(FOOD_TYPES.bullet.spawnRate * 100) }}%) Bullets</div>
+            <div>🔥 {{ FOOD_TYPES.bullet.points }}pt ({{ Math.round(FOOD_TYPES.bullet.spawnRate * 100) }}%) Bullets (eat food)</div>
           </div>
           
           <!-- Rare Foods -->
