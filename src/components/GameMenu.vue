@@ -1,22 +1,22 @@
 <template>
-  <div class="bg-gray-800 p-4 rounded-lg shadow-2xl max-w-4xl w-full">
-    <h2 class="text-xl font-bold mb-4 text-center">Game Settings</h2>
+  <div class="bg-gray-800 p-3 rounded-lg shadow-2xl max-w-5xl w-full">
+    <h2 class="text-lg font-bold mb-3 text-center">Game Settings</h2>
     
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Left Column -->
-      <div class="space-y-4">
-        <!-- Game Mode Selection -->
+    <!-- Compact Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      
+      <!-- Column 1: Game Mode & Core Settings -->
+      <div class="space-y-3">
+        <!-- Game Mode -->
         <div>
-          <label class="block text-sm font-medium mb-2">Game Mode</label>
-          <div class="grid grid-cols-2 gap-2">
+          <label class="block text-xs font-medium mb-1">Mode</label>
+          <div class="grid grid-cols-2 gap-1">
             <button
               @click="updateGameMode('single')"
               data-testid="single-player-btn"
               :class="[
-                'p-2 rounded border-2 transition-all text-sm font-medium',
-                gameMode === 'single' 
-                  ? 'border-green-400 bg-green-400/20 text-green-400' 
-                  : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500'
+                'p-1.5 rounded text-xs font-medium transition-all',
+                gameMode === 'single' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
               ]"
             >
               🐍 Single
@@ -25,10 +25,8 @@
               @click="updateGameMode('multiplayer')"
               data-testid="multiplayer-btn"
               :class="[
-                'p-2 rounded border-2 transition-all text-sm font-medium',
-                gameMode === 'multiplayer' 
-                  ? 'border-blue-400 bg-blue-400/20 text-blue-400' 
-                  : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500'
+                'p-1.5 rounded text-xs font-medium transition-all',
+                gameMode === 'multiplayer' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
               ]"
             >
               🐍🐍 Multi
@@ -36,13 +34,14 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <!-- Basic Settings -->
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-sm font-medium mb-1">Head Shape</label>
+            <label class="block text-xs font-medium mb-1">Shape</label>
             <select 
               :value="settings.headShape"
               @change="updateSettings('headShape', ($event.target as HTMLSelectElement).value)"
-              class="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none text-white text-sm"
+              class="w-full p-1 bg-gray-700 rounded border border-gray-600 text-white text-xs"
             >
               <option v-for="shape in HEAD_SHAPES" :key="shape" :value="shape">
                 {{ shape.charAt(0).toUpperCase() + shape.slice(1) }}
@@ -51,12 +50,12 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium mb-1">Wall Pattern</label>
+            <label class="block text-xs font-medium mb-1">Walls</label>
             <select 
               :value="settings.wallPattern"
               @change="updateSettings('wallPattern', ($event.target as HTMLSelectElement).value)"
               data-testid="wall-pattern-select"
-              class="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none text-white text-sm"
+              class="w-full p-1 bg-gray-700 rounded border border-gray-600 text-white text-xs"
             >
               <option value="none">None</option>
               <option value="simple">Simple</option>
@@ -67,21 +66,81 @@
             </select>
           </div>
         </div>
+
+        <!-- Speed & Foods -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium mb-1">Speed</label>
+            <div class="flex gap-1">
+              <button
+                v-for="(_, label) in SPEEDS"
+                :key="label"
+                @click="updateSettings('speed', label)"
+                :data-testid="`speed-${label}`"
+                :class="[
+                  'flex-1 py-1 rounded text-xs font-medium transition-all',
+                  settings.speed === label ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
+                ]"
+              >
+                {{ label.charAt(0).toUpperCase() }}
+              </button>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-medium mb-1">Foods</label>
+            <div class="flex gap-1">
+              <button
+                v-for="num in [1, 2, 3, 4, 5]"
+                :key="num"
+                @click="updateSettings('maxFoods', num)"
+                :data-testid="`max-foods-${num}`"
+                :class="[
+                  'flex-1 py-1 rounded text-xs font-medium transition-all',
+                  settings.maxFoods === num ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
+                ]"
+              >
+                {{ num }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Size -->
+        <div>
+          <label class="block text-xs font-medium mb-1">Canvas Size</label>
+          <div class="grid grid-cols-4 gap-1">
+            <button
+              v-for="(size, label) in GRID_SIZES"
+              :key="label"
+              @click="updateSettings('gridSize', size)"
+              :data-testid="`grid-size-${label}`"
+              :class="[
+                'py-1 rounded text-xs font-medium transition-all',
+                settings.gridSize === size ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
+              ]"
+            >
+              {{ label.charAt(0).toUpperCase() }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Colors & Features -->
+      <div class="space-y-3">
         <!-- Colors -->
         <div>
-          <label class="block text-sm font-medium mb-1">
-            {{ gameMode === 'multiplayer' ? 'Player Colors' : 'Colors' }}
-          </label>
-          <div class="space-y-2">
-            <div class="flex items-center gap-2">
-              <span class="text-xs w-16">{{ gameMode === 'multiplayer' ? 'P1:' : 'Snake:' }}</span>
+          <label class="block text-xs font-medium mb-1">Colors</label>
+          <div class="space-y-1">
+            <div class="flex items-center gap-1">
+              <span class="text-xs w-10">{{ gameMode === 'multiplayer' ? 'P1:' : 'Snake:' }}</span>
               <div class="flex gap-1">
                 <button
-                  v-for="color in HEAD_COLORS"
+                  v-for="color in HEAD_COLORS.slice(0, 6)"
                   :key="color"
                   @click="updateSettings('headColor', color)"
                   :class="[
-                    'w-6 h-6 rounded border transition-all',
+                    'w-5 h-5 rounded border transition-all',
                     settings.headColor === color ? 'border-white scale-110' : 'border-gray-600'
                   ]"
                   :style="{ backgroundColor: color }"
@@ -89,15 +148,15 @@
               </div>
             </div>
             
-            <div v-if="gameMode === 'multiplayer'" class="flex items-center gap-2">
-              <span class="text-xs w-16">P2:</span>
+            <div v-if="gameMode === 'multiplayer'" class="flex items-center gap-1">
+              <span class="text-xs w-10">P2:</span>
               <div class="flex gap-1">
                 <button
-                  v-for="color in HEAD_COLORS"
+                  v-for="color in HEAD_COLORS.slice(0, 6)"
                   :key="color"
                   @click="updateSettings('headColor2', color)"
                   :class="[
-                    'w-6 h-6 rounded border transition-all',
+                    'w-5 h-5 rounded border transition-all',
                     settings.headColor2 === color ? 'border-white scale-110' : 'border-gray-600'
                   ]"
                   :style="{ backgroundColor: color }"
@@ -105,15 +164,15 @@
               </div>
             </div>
             
-            <div v-if="gameMode === 'single'" class="flex items-center gap-2">
-              <span class="text-xs w-16">BG:</span>
+            <div v-if="gameMode === 'single'" class="flex items-center gap-1">
+              <span class="text-xs w-10">BG:</span>
               <div class="flex gap-1">
                 <button
                   v-for="color in BG_COLORS.slice(0, 3)"
                   :key="color"
                   @click="updateSettings('bgColor', color)"
                   :class="[
-                    'w-6 h-6 rounded border transition-all',
+                    'w-5 h-5 rounded border transition-all',
                     settings.bgColor === color ? 'border-white scale-110' : 'border-gray-600'
                   ]"
                   :style="{ backgroundColor: color }"
@@ -122,104 +181,36 @@
             </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Right Column -->
-      <div class="space-y-4">
-        <!-- Speed & Foods -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm font-medium mb-1">Speed</label>
-            <div class="flex gap-1">
-              <button
-                v-for="(_, label) in SPEEDS"
-                :key="label"
-                @click="updateSettings('speed', label)"
-                :data-testid="`speed-${label}`"
-                :class="[
-                  'flex-1 py-1 px-2 rounded text-xs font-medium transition-all',
-                  settings.speed === label ? 'bg-blue-600 scale-105' : 'bg-gray-700'
-                ]"
-              >
-                {{ label.charAt(0).toUpperCase() + label.slice(1) }}
-              </button>
-            </div>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium mb-1">Max Foods</label>
-            <div class="flex gap-1">
-              <button
-                v-for="num in [1, 2, 3, 4, 5]"
-                :key="num"
-                @click="updateSettings('maxFoods', num)"
-                :data-testid="`max-foods-${num}`"
-                :class="[
-                  'flex-1 py-1 px-2 rounded text-xs font-medium transition-all',
-                  settings.maxFoods === num ? 'bg-blue-600 scale-105' : 'bg-gray-700'
-                ]"
-              >
-                {{ num }}
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Canvas Size -->
-        <div>
-          <label class="block text-sm font-medium mb-1">Canvas Size</label>
-          <div class="grid grid-cols-4 gap-1">
-            <button
-              v-for="(size, label) in GRID_SIZES"
-              :key="label"
-              @click="updateSettings('gridSize', size)"
-              :data-testid="`grid-size-${label}`"
-              :class="[
-                'py-1 px-2 rounded text-xs font-medium transition-all',
-                settings.gridSize === size ? 'bg-green-600 scale-105' : 'bg-gray-700'
-              ]"
-            >
-              {{ label.charAt(0).toUpperCase() + label.slice(1) }}
-            </button>
-          </div>
-        </div>
-        
-        <!-- Audio Controls -->
-        <div class="p-3 bg-gray-700 rounded border border-gray-600">
-          <h3 class="text-sm font-bold mb-2 flex items-center">
-            <span class="mr-2">🔊</span>Audio
-          </h3>
-          
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <!-- Sound Effects Toggle -->
+
+        <!-- Audio Compact -->
+        <div class="p-2 bg-gray-700 rounded">
+          <h4 class="text-xs font-bold mb-2">🔊 Audio</h4>
+          <div class="grid grid-cols-2 gap-1 mb-2">
             <button
               @click="updateSettings('soundEnabled', !settings.soundEnabled)"
               data-testid="sound-toggle"
               :class="[
-                'flex items-center justify-center p-2 rounded text-xs transition-all',
+                'p-1 rounded text-xs transition-all',
                 settings.soundEnabled ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
               ]"
             >
-              🔊 SFX
+              SFX
             </button>
-            
-            <!-- Background Music Toggle -->
             <button
               @click="updateSettings('musicEnabled', !settings.musicEnabled)"
               data-testid="music-toggle"
               :class="[
-                'flex items-center justify-center p-2 rounded text-xs transition-all',
+                'p-1 rounded text-xs transition-all',
                 settings.musicEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 text-gray-300'
               ]"
             >
-              🎵 Music
+              Music
             </button>
           </div>
           
-          <!-- Volume Sliders -->
           <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="text-xs w-12">SFX:</span>
+            <div class="flex items-center gap-1">
+              <span class="text-xs w-8">SFX:</span>
               <input
                 type="range"
                 min="0"
@@ -228,14 +219,14 @@
                 :value="settings.soundVolume"
                 @input="updateSettings('soundVolume', parseFloat(($event.target as HTMLInputElement).value))"
                 data-testid="sound-volume"
-                class="flex-1 h-1 bg-gray-600 rounded slider"
+                class="flex-1 h-1 slider"
                 :disabled="!settings.soundEnabled"
               />
-              <span class="text-xs w-8 text-gray-400">{{ Math.round(settings.soundVolume * 100) }}%</span>
+              <span class="text-xs w-6">{{ Math.round(settings.soundVolume * 100) }}</span>
             </div>
             
-            <div class="flex items-center gap-2">
-              <span class="text-xs w-12">Music:</span>
+            <div class="flex items-center gap-1">
+              <span class="text-xs w-8">Music:</span>
               <input
                 type="range"
                 min="0"
@@ -244,53 +235,73 @@
                 :value="settings.musicVolume"
                 @input="updateSettings('musicVolume', parseFloat(($event.target as HTMLInputElement).value))"
                 data-testid="music-volume"
-                class="flex-1 h-1 bg-gray-600 rounded slider"
+                class="flex-1 h-1 slider"
                 :disabled="!settings.musicEnabled"
               />
-              <span class="text-xs w-8 text-gray-400">{{ Math.round(settings.musicVolume * 100) }}%</span>
+              <span class="text-xs w-6">{{ Math.round(settings.musicVolume * 100) }}</span>
             </div>
           </div>
         </div>
-        
-        <!-- Bot Settings -->
-        <div class="p-3 bg-gray-700 rounded border border-gray-600">
-          <h3 class="text-sm font-bold mb-2 flex items-center">
-            <span class="mr-2">🤖</span>Enemy Bots
-          </h3>
-          
-          <div class="space-y-2">
-            <!-- Bot Toggle -->
-            <div class="flex items-center justify-between">
-              <span class="text-xs">Enabled</span>
-              <button
-                @click="updateSettings('botsEnabled', !settings.botsEnabled)"
-                data-testid="bots-toggle"
+
+        <!-- Features Compact -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-2 bg-gray-700 rounded">
+            <span class="text-xs">🌀 Teleport</span>
+            <button
+              @click="updateSettings('teleportEnabled', !settings.teleportEnabled)"
+              data-testid="teleport-toggle"
+              :class="[
+                'relative inline-flex h-3 w-6 items-center rounded-full transition-colors',
+                settings.teleportEnabled ? 'bg-green-600' : 'bg-gray-600'
+              ]"
+            >
+              <span
                 :class="[
-                  'relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200',
-                  settings.botsEnabled ? 'bg-red-600' : 'bg-gray-600'
+                  'inline-block h-2 w-2 transform rounded-full bg-white transition-transform',
+                  settings.teleportEnabled ? 'translate-x-3' : 'translate-x-0.5'
                 ]"
-              >
-                <span
-                  :class="[
-                    'inline-block h-2 w-2 transform rounded-full bg-white transition-transform duration-200',
-                    settings.botsEnabled ? 'translate-x-4' : 'translate-x-1'
-                  ]"
-                />
-              </button>
-            </div>
-            
-            <!-- Bot Count -->
-            <div v-if="settings.botsEnabled">
-              <label class="block text-xs font-medium mb-1">Count (0 = Random 1-5)</label>
-              <div class="flex gap-1">
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 3: Bots -->
+      <div class="space-y-3">
+        <div class="p-2 bg-gray-700 rounded">
+          <h4 class="text-xs font-bold mb-2">🤖 Enemy Bots</h4>
+          
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs">Enabled</span>
+            <button
+              @click="updateSettings('botsEnabled', !settings.botsEnabled)"
+              data-testid="bots-toggle"
+              :class="[
+                'relative inline-flex h-3 w-6 items-center rounded-full transition-colors',
+                settings.botsEnabled ? 'bg-red-600' : 'bg-gray-600'
+              ]"
+            >
+              <span
+                :class="[
+                  'inline-block h-2 w-2 transform rounded-full bg-white transition-transform',
+                  settings.botsEnabled ? 'translate-x-3' : 'translate-x-0.5'
+                ]"
+              />
+            </button>
+          </div>
+          
+          <div v-if="settings.botsEnabled" class="space-y-2">
+            <div>
+              <label class="block text-xs font-medium mb-1">Count (0=Random)</label>
+              <div class="grid grid-cols-6 gap-1">
                 <button
                   v-for="num in [0, 1, 2, 3, 4, 5]"
                   :key="num"
                   @click="updateSettings('botCount', num)"
                   data-testid="`bot-count-${num}`"
                   :class="[
-                    'flex-1 py-1 px-1 rounded text-xs font-medium transition-all',
-                    settings.botCount === num ? 'bg-red-600 scale-105' : 'bg-gray-600'
+                    'py-1 rounded text-xs font-medium transition-all',
+                    settings.botCount === num ? 'bg-red-600 text-white' : 'bg-gray-600 text-gray-300'
                   ]"
                 >
                   {{ num === 0 ? '?' : num }}
@@ -298,77 +309,46 @@
               </div>
             </div>
             
-            <!-- Bot Difficulty -->
-            <div v-if="settings.botsEnabled">
+            <div>
               <label class="block text-xs font-medium mb-1">Difficulty</label>
-              <div class="flex gap-1">
+              <div class="grid grid-cols-3 gap-1">
                 <button
                   v-for="difficulty in ['easy', 'medium', 'hard']"
                   :key="difficulty"
                   @click="updateSettings('botDifficulty', difficulty)"
                   data-testid="`bot-difficulty-${difficulty}`"
                   :class="[
-                    'flex-1 py-1 px-2 rounded text-xs font-medium transition-all',
-                    settings.botDifficulty === difficulty ? 'bg-red-600 scale-105' : 'bg-gray-600'
+                    'py-1 rounded text-xs font-medium transition-all',
+                    settings.botDifficulty === difficulty ? 'bg-red-600 text-white' : 'bg-gray-600 text-gray-300'
                   ]"
                 >
-                  {{ difficulty.charAt(0).toUpperCase() + difficulty.slice(1) }}
+                  {{ difficulty.charAt(0).toUpperCase() }}
                 </button>
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- Teleport Toggle -->
-        <div>
-          <div class="flex items-center justify-between p-2 bg-gray-700 rounded border border-gray-600">
-            <div class="flex items-center space-x-2">
-              <span class="text-lg">🌀</span>
-              <div>
-                <label class="text-sm font-medium">Teleport Mode</label>
-                <p class="text-xs text-gray-400">Jump through walls</p>
-              </div>
-            </div>
-            <button
-              @click="updateSettings('teleportEnabled', !settings.teleportEnabled)"
-              data-testid="teleport-toggle"
-              :class="[
-                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
-                settings.teleportEnabled ? 'bg-green-600' : 'bg-gray-600'
-              ]"
-            >
-              <span
-                :class="[
-                  'inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200',
-                  settings.teleportEnabled ? 'translate-x-5' : 'translate-x-1'
-                ]"
-              />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
     
-    <!-- Active Challenges -->
-    <div v-if="todaysChallenge || thisWeeksChallenge || (activeSeasonalEvents && activeSeasonalEvents.length > 0)" class="mt-4">
+    <!-- Active Challenges (Compact) -->
+    <div v-if="todaysChallenge || thisWeeksChallenge || (activeSeasonalEvents && activeSeasonalEvents.length > 0)" class="mt-3">
       <!-- Collapsible Header -->
       <button
         @click="toggleChallenges"
-        class="w-full flex items-center justify-between p-3 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 mb-3"
+        class="w-full flex items-center justify-between p-2 bg-gradient-to-r from-yellow-600 to-orange-600 rounded hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 mb-2"
       >
-        <h3 class="text-lg font-bold text-white">🌟 Active Challenges</h3>
-        <div class="flex items-center space-x-2">
-          <!-- Challenge Count Badge -->
-          <span class="bg-white bg-opacity-20 text-xs px-2 py-1 rounded-full">
+        <h3 class="text-sm font-bold text-white">🌟 Challenges</h3>
+        <div class="flex items-center space-x-1">
+          <span class="bg-white bg-opacity-20 text-xs px-1 py-0.5 rounded">
             {{ 
               (todaysChallenge ? 1 : 0) + 
               (thisWeeksChallenge ? 1 : 0) + 
               (activeSeasonalEvents ? activeSeasonalEvents.length : 0)
-            }} active
+            }}
           </span>
-          <!-- Expand/Collapse Icon -->
           <span 
-            class="transform transition-transform duration-200 text-white"
+            class="transform transition-transform duration-200 text-white text-xs"
             :class="challengesExpanded ? 'rotate-180' : 'rotate-0'"
           >
             ▼
@@ -459,61 +439,58 @@
       </div>
     </div>
     
-    <!-- Progression Tip -->
-    <div class="mt-4 p-3 bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-lg border border-blue-500/30">
-      <div class="flex items-center mb-1">
-        <span class="text-sm mr-2">💡</span>
-        <span class="text-sm font-medium text-blue-400">Progression System</span>
-      </div>
-      <div class="text-xs text-gray-300">
-        Complete challenges, earn XP, unlock achievements, and customize your snake! 
-        <span class="text-purple-400">Click "📊 Progress" button</span> to view detailed stats and rewards.
-      </div>
-    </div>
-    
+    <!-- Start Game Button -->
     <button
       @click="$emit('start-game')"
       data-testid="start-game-btn"
-      class="w-full mt-4 bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded hover:from-green-600 hover:to-blue-600 transition transform hover:scale-105"
+      class="w-full mt-3 bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded hover:from-green-600 hover:to-blue-600 transition transform hover:scale-105"
     >
       🎮 Start Game
     </button>
     
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-      <!-- Controls Information -->
-      <div class="p-3 bg-gray-700 rounded">
-        <h3 class="text-sm font-bold mb-2">🎮 Controls</h3>
-        <div class="text-xs space-y-1">
-          <div v-if="gameMode === 'single'">Arrow Keys or WASD to move</div>
+    <!-- Compact Info Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-3">
+      <!-- Controls -->
+      <div class="p-2 bg-gray-700 rounded">
+        <h4 class="text-xs font-bold mb-1">🎮 Controls</h4>
+        <div class="text-xs space-y-0.5">
+          <div v-if="gameMode === 'single'">Arrow/WASD</div>
           <div v-if="gameMode === 'multiplayer'">
-            <div class="text-green-400">P1: Arrow Keys</div>
+            <div class="text-green-400">P1: Arrows</div>
             <div class="text-blue-400">P2: WASD</div>
           </div>
-          <div class="text-yellow-300">SPACE: Pause/Resume</div>
+          <div class="text-yellow-300">SPACE: Pause</div>
         </div>
       </div>
       
       <!-- Food Guide -->
-      <div class="p-3 bg-gray-700 rounded">
-        <h3 class="text-sm font-bold mb-2">🍎 Food Guide</h3>
-        <div class="grid grid-cols-2 gap-1 text-xs">
-          <div v-for="([type, props]) in Object.entries(FOOD_TYPES).filter(([_, props]) => !props.effect)" :key="type" class="flex items-center gap-1">
-            <span>{{ props.emoji }}</span>
-            <span>{{ props.points }}pts</span>
+      <div class="p-2 bg-gray-700 rounded">
+        <h4 class="text-xs font-bold mb-1">🍎 Foods</h4>
+        <div class="text-xs">
+          <div class="grid grid-cols-2 gap-0.5">
+            <span>🍎 1pt</span><span>🍌 2pt</span>
+            <span>🍒 3pt</span><span>🍉 5pt</span>
+          </div>
+          <div class="mt-1 space-y-0.5">
+            <div>🍄 +2 🔥 Bullets</div>
+            <div>☠️ -2 💊 -1~3</div>
           </div>
         </div>
-        <div class="mt-2 space-y-1 text-xs">
-          <div class="text-green-300 font-bold">Special Effects:</div>
-          <div><span>🍄</span> x2 Length <span>☠️</span> -2 Length</div>
-          <div><span>🔥</span> 5 Bullets <span>🧪</span> +1-3 Length</div>
-          <div><span>💊</span> -1-3 Length</div>
+      </div>
+      
+      <!-- Progress Info -->
+      <div class="p-2 bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded border border-blue-500/30">
+        <h4 class="text-xs font-bold mb-1 text-blue-400">💡 Progress</h4>
+        <div class="text-xs text-gray-300">
+          Earn XP, unlock achievements! 
+          <span class="text-purple-400">📊 Progress</span> for details.
         </div>
       </div>
     </div>
     
-    <div v-if="highScores.length > 0" class="mt-4 pt-4 border-t border-gray-700">
-      <h3 class="text-lg font-bold mb-2">🏆 High Scores</h3>
-      <ol class="flex gap-4 justify-center">
+    <div v-if="highScores.length > 0" class="mt-3 pt-2 border-t border-gray-700">
+      <h4 class="text-sm font-bold mb-1">🏆 High Scores</h4>
+      <ol class="flex gap-2 justify-center text-xs">
         <li v-for="(score, i) in highScores" :key="i" class="flex items-center gap-1">
           <span>{{ ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i] }}</span>
           <span class="font-mono text-yellow-400">{{ score }}</span>
