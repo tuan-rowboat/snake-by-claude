@@ -1,4 +1,4 @@
-import type { SoundEffect, BackgroundMusic, AudioSettings, SoundConfig, MusicConfig } from '../types/audio'
+import type { SoundEffect, BackgroundMusic, AudioSettings } from '../types/audio'
 
 export class SoundManager {
   private sounds: Map<SoundEffect, HTMLAudioElement[]> = new Map()

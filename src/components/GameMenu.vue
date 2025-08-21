@@ -252,6 +252,73 @@
           </div>
         </div>
         
+        <!-- Bot Settings -->
+        <div class="p-3 bg-gray-700 rounded border border-gray-600">
+          <h3 class="text-sm font-bold mb-2 flex items-center">
+            <span class="mr-2">🤖</span>Enemy Bots
+          </h3>
+          
+          <div class="space-y-2">
+            <!-- Bot Toggle -->
+            <div class="flex items-center justify-between">
+              <span class="text-xs">Enabled</span>
+              <button
+                @click="updateSettings('botsEnabled', !settings.botsEnabled)"
+                data-testid="bots-toggle"
+                :class="[
+                  'relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200',
+                  settings.botsEnabled ? 'bg-red-600' : 'bg-gray-600'
+                ]"
+              >
+                <span
+                  :class="[
+                    'inline-block h-2 w-2 transform rounded-full bg-white transition-transform duration-200',
+                    settings.botsEnabled ? 'translate-x-4' : 'translate-x-1'
+                  ]"
+                />
+              </button>
+            </div>
+            
+            <!-- Bot Count -->
+            <div v-if="settings.botsEnabled">
+              <label class="block text-xs font-medium mb-1">Count (0 = Random 1-5)</label>
+              <div class="flex gap-1">
+                <button
+                  v-for="num in [0, 1, 2, 3, 4, 5]"
+                  :key="num"
+                  @click="updateSettings('botCount', num)"
+                  data-testid="`bot-count-${num}`"
+                  :class="[
+                    'flex-1 py-1 px-1 rounded text-xs font-medium transition-all',
+                    settings.botCount === num ? 'bg-red-600 scale-105' : 'bg-gray-600'
+                  ]"
+                >
+                  {{ num === 0 ? '?' : num }}
+                </button>
+              </div>
+            </div>
+            
+            <!-- Bot Difficulty -->
+            <div v-if="settings.botsEnabled">
+              <label class="block text-xs font-medium mb-1">Difficulty</label>
+              <div class="flex gap-1">
+                <button
+                  v-for="difficulty in ['easy', 'medium', 'hard']"
+                  :key="difficulty"
+                  @click="updateSettings('botDifficulty', difficulty)"
+                  data-testid="`bot-difficulty-${difficulty}`"
+                  :class="[
+                    'flex-1 py-1 px-2 rounded text-xs font-medium transition-all',
+                    settings.botDifficulty === difficulty ? 'bg-red-600 scale-105' : 'bg-gray-600'
+                  ]"
+                >
+                  {{ difficulty.charAt(0).toUpperCase() + difficulty.slice(1) }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <!-- Teleport Toggle -->
         <div>
           <div class="flex items-center justify-between p-2 bg-gray-700 rounded border border-gray-600">

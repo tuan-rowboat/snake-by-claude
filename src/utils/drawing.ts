@@ -1,4 +1,5 @@
 import type { ShapeType, HeadShape, Direction, Position, Food } from '../types/game'
+import type { Bot } from '../types/bot'
 import { CELL_SIZE, getGameSize, FOOD_TYPES } from './constants'
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeType, x: number, y: number, size: number, color: string | CanvasGradient): void => {
@@ -233,4 +234,88 @@ export const drawBulletWithTrail = (
   ctx.textAlign = 'center'
   ctx.fillStyle = '#ffffff'
   ctx.fillText('●', bullet.x * CELL_SIZE + 12, bullet.y * CELL_SIZE + 16)
+}
+
+// Draw a bot with visual effects
+export const drawBot = (ctx: CanvasRenderingContext2D, bot: Bot): void => {
+  if (!bot.isActive) return
+  
+  const x = bot.x * CELL_SIZE
+  const y = bot.y * CELL_SIZE
+  const size = CELL_SIZE * bot.size
+  const offsetX = (CELL_SIZE - size) / 2
+  const offsetY = (CELL_SIZE - size) / 2
+  
+  ctx.save()
+  
+  // Add pulsing glow effect
+  const pulseIntensity = 0.3 + 0.2 * Math.sin(Date.now() * 0.005)
+  ctx.shadowColor = bot.color
+  ctx.shadowBlur = 10 + pulseIntensity * 5
+  
+  // Draw bot body (circle with danger appearance)
+  ctx.fillStyle = bot.color
+  ctx.beginPath()
+  ctx.arc(x + offsetX + size/2, y + offsetY + size/2, size/2, 0, Math.PI * 2)
+  ctx.fill()
+  
+  // Draw inner highlight
+  ctx.shadowBlur = 0
+  ctx.fillStyle = '#ffffff'
+  ctx.globalAlpha = 0.3
+  ctx.beginPath()
+  ctx.arc(x + offsetX + size/3, y + offsetY + size/3, size/6, 0, Math.PI * 2)
+  ctx.fill()
+  
+  // Draw directional indicator (small triangle)
+  ctx.globalAlpha = 0.8
+  ctx.fillStyle = '#ffffff'
+  const centerX = x + offsetX + size/2
+  const centerY = y + offsetY + size/2
+  const arrowSize = size/4
+  
+  ctx.beginPath()
+  if (bot.direction.x === 1) {
+    // Right arrow
+    ctx.moveTo(centerX + arrowSize/2, centerY)
+    ctx.lineTo(centerX - arrowSize/2, centerY - arrowSize/2)
+    ctx.lineTo(centerX - arrowSize/2, centerY + arrowSize/2)
+  } else if (bot.direction.x === -1) {
+    // Left arrow
+    ctx.moveTo(centerX - arrowSize/2, centerY)
+    ctx.lineTo(centerX + arrowSize/2, centerY - arrowSize/2)
+    ctx.lineTo(centerX + arrowSize/2, centerY + arrowSize/2)
+  } else if (bot.direction.y === -1) {
+    // Up arrow
+    ctx.moveTo(centerX, centerY - arrowSize/2)
+    ctx.lineTo(centerX - arrowSize/2, centerY + arrowSize/2)
+    ctx.lineTo(centerX + arrowSize/2, centerY + arrowSize/2)
+  } else if (bot.direction.y === 1) {
+    // Down arrow
+    ctx.moveTo(centerX, centerY + arrowSize/2)
+    ctx.lineTo(centerX - arrowSize/2, centerY - arrowSize/2)
+    ctx.lineTo(centerX + arrowSize/2, centerY - arrowSize/2)
+  }
+  ctx.closePath()
+  ctx.fill()
+  
+  // Draw bot type indicator
+  ctx.globalAlpha = 1
+  ctx.font = `${Math.floor(size/3)}px Arial`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#ffffff'
+  
+  let typeSymbol = '?'
+  switch (bot.type) {
+    case 'wanderer': typeSymbol = '~'; break
+    case 'chaser': typeSymbol = '!'; break
+    case 'guard': typeSymbol = '#'; break
+    case 'patrol': typeSymbol = '↔'; break
+    case 'random': typeSymbol = '*'; break
+  }
+  
+  ctx.fillText(typeSymbol, centerX, centerY + size/8)
+  
+  ctx.restore()
 }

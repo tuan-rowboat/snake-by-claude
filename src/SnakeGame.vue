@@ -29,6 +29,7 @@
       :foods="gameProgress.foods"
       :walls="gameProgress.walls"
       :bullets="gameProgress.bullets"
+      :bots="gameProgress.bots"
       :direction="gameProgress.direction"
       :direction2="gameProgress.direction2"
       :score="gameProgress.score"
@@ -117,6 +118,7 @@ import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, chec
 import { loadHighScores, updateHighScores } from './utils/storage'
 import { ProgressionSystem } from './utils/progressionSystem'
 import { SoundManager } from './utils/soundManager'
+import { generateRandomBotCount, initializeBots, updateAllBots, checkBotCollisions } from './utils/botLogic'
 import GameMenu from './components/GameMenu.vue'
 import GameCanvas from './components/GameCanvas.vue'
 import GameOver from './components/GameOver.vue'
@@ -141,7 +143,10 @@ const settings: Ref<GameSettings> = ref({
   soundEnabled: true,
   musicEnabled: true,
   soundVolume: 0.7,
-  musicVolume: 0.5
+  musicVolume: 0.5,
+  botsEnabled: false,
+  botCount: 3,
+  botDifficulty: 'medium'
 })
 
 const gameProgress: Ref<GameProgress> = ref({
@@ -150,6 +155,7 @@ const gameProgress: Ref<GameProgress> = ref({
   foods: [{ x: 15, y: 15, type: 'apple' }],
   walls: [],
   bullets: [],
+  bots: [],
   direction: { x: 1, y: 0 },
   direction2: { x: 1, y: 0 },
   score: 0,
@@ -356,6 +362,22 @@ const startGame = (): void => {
   }
   gameProgress.value.foods = initialFoods
   
+  // Initialize bots if enabled
+  if (settings.value.botsEnabled) {
+    const existingPositions = [
+      ...gameProgress.value.snake,
+      ...(gameMode.value === 'multiplayer' ? gameProgress.value.snake2 : []),
+      ...gameProgress.value.walls,
+      ...gameProgress.value.foods
+    ]
+    
+    // Use random count (1-5) or user-defined count
+    const botCount = settings.value.botCount === 0 ? generateRandomBotCount() : settings.value.botCount
+    gameProgress.value.bots = initializeBots(botCount, settings.value.gridSize, existingPositions)
+  } else {
+    gameProgress.value.bots = []
+  }
+  
   gameState.value = 'playing'
   
   // Setup moving walls timer if needed
@@ -389,6 +411,27 @@ const setupMovingWallsTimer = (): void => {
 
 const gameLoop = (): void => {
   if (gameState.value !== 'playing') return
+
+  // Update bots if enabled
+  if (settings.value.botsEnabled && gameProgress.value.bots.length > 0) {
+    const playerPositions = [
+      gameProgress.value.snake[0], // Snake head
+      ...(gameMode.value === 'multiplayer' ? [gameProgress.value.snake2[0]] : [])
+    ]
+    const obstacles = [
+      ...gameProgress.value.walls,
+      ...gameProgress.value.snake.slice(1), // Snake body (excluding head)
+      ...(gameMode.value === 'multiplayer' ? gameProgress.value.snake2.slice(1) : [])
+    ]
+    
+    gameProgress.value.bots = updateAllBots(
+      gameProgress.value.bots,
+      Date.now(),
+      settings.value.gridSize,
+      playerPositions,
+      obstacles
+    )
+  }
 
   // Move bullets
   gameProgress.value.bullets = moveBullets(gameProgress.value.bullets, settings.value.gridSize)
@@ -459,8 +502,16 @@ const gameLoop = (): void => {
     const newSnake = moveSnake(gameProgress.value.snake, gameProgress.value.direction)
     const head = newSnake[0]
     
-    // Check collisions
+    // Check collisions with walls and self
     if (checkCollisions(head, gameProgress.value.snake, gameProgress.value.walls, [], settings.value.gridSize)) {
+      soundManager.playSound('game_over')
+      handleGameEnd()
+      gameState.value = 'gameOver'
+      return
+    }
+    
+    // Check collisions with bots
+    if (settings.value.botsEnabled && checkBotCollisions(head, gameProgress.value.bots)) {
       soundManager.playSound('game_over')
       handleGameEnd()
       gameState.value = 'gameOver'
@@ -526,6 +577,16 @@ const gameLoop = (): void => {
     }
     if (checkCollisions(head2, gameProgress.value.snake2, gameProgress.value.walls, gameProgress.value.snake, settings.value.gridSize)) {
       player2Dead = true
+    }
+    
+    // Check bot collisions for both players
+    if (settings.value.botsEnabled) {
+      if (checkBotCollisions(head1, gameProgress.value.bots)) {
+        player1Dead = true
+      }
+      if (checkBotCollisions(head2, gameProgress.value.bots)) {
+        player2Dead = true
+      }
     }
     
     // Check head-to-head collision

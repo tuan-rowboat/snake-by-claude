@@ -16,7 +16,10 @@ export function useGameSettings() {
     soundEnabled: true,
     musicEnabled: true,
     soundVolume: 0.7,
-    musicVolume: 0.5
+    musicVolume: 0.5,
+    botsEnabled: false,
+    botCount: 3,
+    botDifficulty: 'medium'
   })
 
   // Auto-save settings to localStorage

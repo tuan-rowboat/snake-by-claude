@@ -54,6 +54,9 @@ export interface GameSettings {
   musicEnabled: boolean
   soundVolume: number
   musicVolume: number
+  botsEnabled: boolean
+  botCount: number
+  botDifficulty: 'easy' | 'medium' | 'hard'
 }
 
 export interface Bullet extends Position {
@@ -67,6 +70,7 @@ export interface GameProgress {
   foods: Food[]
   walls: Position[]
   bullets: Bullet[]
+  bots: Bot[]
   direction: Direction
   direction2: Direction
   score: number
@@ -77,3 +81,5 @@ export interface GameProgress {
   bulletCount: number
   bulletCount2: number
 }
+
+import type { Bot } from './bot'

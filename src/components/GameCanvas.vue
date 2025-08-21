@@ -101,8 +101,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue'
 import type { Position, Food, Bullet, GameState, GameMode, Direction, GameSettings } from '../types/game'
+import type { Bot } from '../types/bot'
 import { FOOD_TYPES, getGameSize } from '../utils/constants'
-import { drawGrid, drawWalls, drawPauseOverlay, drawSnakeWithTrail, drawAnimatedFood, drawBulletWithTrail } from '../utils/drawing'
+import { drawGrid, drawWalls, drawPauseOverlay, drawSnakeWithTrail, drawAnimatedFood, drawBulletWithTrail, drawBot } from '../utils/drawing'
 import { ParticleSystem } from '../utils/particles'
 import { ScreenShake } from '../utils/screenShake'
 
@@ -114,6 +115,7 @@ interface Props {
   foods: Food[]
   walls: Position[]
   bullets: Bullet[]
+  bots: Bot[]
   direction: Direction
   direction2: Direction
   score: number
@@ -207,6 +209,11 @@ const draw = (): void => {
   // Draw bullets with enhanced effects
   props.bullets.forEach(bullet => {
     drawBulletWithTrail(ctx, bullet)
+  })
+  
+  // Draw bots with danger effects
+  props.bots.forEach(bot => {
+    drawBot(ctx, bot)
   })
   
   // Draw particles
