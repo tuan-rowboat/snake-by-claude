@@ -50,6 +50,10 @@ export interface GameSettings {
   maxFoods: number
   teleportEnabled: boolean
   gridSize: number
+  soundEnabled: boolean
+  musicEnabled: boolean
+  soundVolume: number
+  musicVolume: number
 }
 
 export interface Bullet extends Position {

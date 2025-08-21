@@ -12,7 +12,11 @@ export function useGameSettings() {
     wallPattern: 'simple',
     maxFoods: 3,
     teleportEnabled: false,
-    gridSize: 20
+    gridSize: 20,
+    soundEnabled: true,
+    musicEnabled: true,
+    soundVolume: 0.7,
+    musicVolume: 0.5
   })
 
   // Auto-save settings to localStorage

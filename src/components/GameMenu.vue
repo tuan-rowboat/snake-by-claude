@@ -184,6 +184,74 @@
           </div>
         </div>
         
+        <!-- Audio Controls -->
+        <div class="p-3 bg-gray-700 rounded border border-gray-600">
+          <h3 class="text-sm font-bold mb-2 flex items-center">
+            <span class="mr-2">🔊</span>Audio
+          </h3>
+          
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <!-- Sound Effects Toggle -->
+            <button
+              @click="updateSettings('soundEnabled', !settings.soundEnabled)"
+              data-testid="sound-toggle"
+              :class="[
+                'flex items-center justify-center p-2 rounded text-xs transition-all',
+                settings.soundEnabled ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+              ]"
+            >
+              🔊 SFX
+            </button>
+            
+            <!-- Background Music Toggle -->
+            <button
+              @click="updateSettings('musicEnabled', !settings.musicEnabled)"
+              data-testid="music-toggle"
+              :class="[
+                'flex items-center justify-center p-2 rounded text-xs transition-all',
+                settings.musicEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 text-gray-300'
+              ]"
+            >
+              🎵 Music
+            </button>
+          </div>
+          
+          <!-- Volume Sliders -->
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs w-12">SFX:</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                :value="settings.soundVolume"
+                @input="updateSettings('soundVolume', parseFloat(($event.target as HTMLInputElement).value))"
+                data-testid="sound-volume"
+                class="flex-1 h-1 bg-gray-600 rounded slider"
+                :disabled="!settings.soundEnabled"
+              />
+              <span class="text-xs w-8 text-gray-400">{{ Math.round(settings.soundVolume * 100) }}%</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="text-xs w-12">Music:</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                :value="settings.musicVolume"
+                @input="updateSettings('musicVolume', parseFloat(($event.target as HTMLInputElement).value))"
+                data-testid="music-volume"
+                class="flex-1 h-1 bg-gray-600 rounded slider"
+                :disabled="!settings.musicEnabled"
+              />
+              <span class="text-xs w-8 text-gray-400">{{ Math.round(settings.musicVolume * 100) }}%</span>
+            </div>
+          </div>
+        </div>
+        
         <!-- Teleport Toggle -->
         <div>
           <div class="flex items-center justify-between p-2 bg-gray-700 rounded border border-gray-600">
@@ -427,3 +495,44 @@ const toggleChallenges = () => {
   challengesExpanded.value = !challengesExpanded.value
 }
 </script>
+
+<style scoped>
+/* Custom slider styles */
+.slider {
+  background: linear-gradient(to right, #4ade80 0%, #22c55e 100%);
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #22c55e;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.slider::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #22c55e;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slider:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+}
+
+.slider:disabled::-moz-range-thumb {
+  cursor: not-allowed;
+}
+</style>

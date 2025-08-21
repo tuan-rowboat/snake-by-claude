@@ -116,6 +116,7 @@ import { SPEEDS, WALL_PATTERNS, FOOD_TYPES, TELEPORT_COOLDOWN } from './utils/co
 import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions } from './utils/gameLogic'
 import { loadHighScores, updateHighScores } from './utils/storage'
 import { ProgressionSystem } from './utils/progressionSystem'
+import { SoundManager } from './utils/soundManager'
 import GameMenu from './components/GameMenu.vue'
 import GameCanvas from './components/GameCanvas.vue'
 import GameOver from './components/GameOver.vue'
@@ -136,7 +137,11 @@ const settings: Ref<GameSettings> = ref({
   wallPattern: 'simple',
   maxFoods: 3,
   teleportEnabled: false,
-  gridSize: 20
+  gridSize: 20,
+  soundEnabled: true,
+  musicEnabled: true,
+  soundVolume: 0.7,
+  musicVolume: 0.5
 })
 
 const gameProgress: Ref<GameProgress> = ref({
@@ -162,6 +167,9 @@ const gameCanvasRef: Ref<typeof GameCanvas | null> = ref(null)
 // Progression System
 const progressionSystem = new ProgressionSystem()
 const progressionData = ref(progressionSystem.getData())
+
+// Sound System
+const soundManager = new SoundManager()
 const showProgressPanel = ref(false)
 const showLevelUpNotification = ref(false)
 const achievementNotifications: Ref<Achievement[]> = ref([])
@@ -192,11 +200,23 @@ const isNewHighScore = computed(() => {
 
 // Methods
 const updateGameMode = (mode: GameMode): void => {
+  soundManager.playSound('button_click')
   gameMode.value = mode
 }
 
 const updateSettings = (key: keyof GameSettings, value: any): void => {
-  (settings.value as any)[key] = value
+  soundManager.playSound('button_click')
+  ;(settings.value as any)[key] = value
+  
+  // Update sound manager settings when audio settings change
+  if (key === 'soundEnabled' || key === 'musicEnabled' || key === 'soundVolume' || key === 'musicVolume') {
+    soundManager.updateSettings({
+      soundEnabled: settings.value.soundEnabled,
+      musicEnabled: settings.value.musicEnabled,
+      soundVolume: settings.value.soundVolume,
+      musicVolume: settings.value.musicVolume
+    })
+  }
 }
 
 // Progression System Methods
@@ -212,6 +232,7 @@ const selectTrail = (trailId: string): void => {
 
 const showAchievementNotification = (achievement: Achievement): void => {
   achievementNotifications.value.push(achievement)
+  soundManager.playSound('achievement_unlock')
 }
 
 const removeAchievementNotification = (index: number): void => {
@@ -225,6 +246,7 @@ const handleLevelUp = (newLevel: number, experienceGained: number): void => {
     unlockedRewards: [] // Will be populated by progression system
   }
   showLevelUpNotification.value = true
+  soundManager.playSound('level_up')
 }
 
 const handleGameEnd = (): void => {
@@ -271,6 +293,10 @@ const handleGameEnd = (): void => {
 }
 
 const startGame = (): void => {
+  // Initialize audio on first user interaction
+  soundManager.initializeAudio()
+  soundManager.playSound('button_click')
+  
   // Reset game statistics tracking
   gameStartTime = Date.now()
   foodsEatenThisGame = 0
@@ -339,6 +365,7 @@ const startGame = (): void => {
 }
 
 const returnToMenu = (): void => {
+  soundManager.playSound('button_click')
   gameState.value = 'menu'
 }
 
@@ -373,6 +400,7 @@ const gameLoop = (): void => {
   // Remove destroyed walls
   if (destroyedWalls.length > 0) {
     wallsBrokenThisGame += destroyedWalls.length // Track walls broken
+    soundManager.playSound('wall_break')
     gameProgress.value.walls = gameProgress.value.walls.filter(wall => 
       !destroyedWalls.some(destroyed => destroyed.x === wall.x && destroyed.y === wall.y)
     )
@@ -387,7 +415,7 @@ const gameLoop = (): void => {
     gameProgress.value.bullets = bulletsAfterSnakeCheck
     
     if (snakeHit) {
-      handleGameEnd()
+      soundManager.playSound('game_over')
       handleGameEnd()
       gameState.value = 'gameOver'
       return
@@ -409,6 +437,7 @@ const gameLoop = (): void => {
       } else {
         gameProgress.value.winner = 'player1'
       }
+      soundManager.playSound('game_over')
       handleGameEnd()
       gameState.value = 'gameOver'
       return
@@ -432,6 +461,7 @@ const gameLoop = (): void => {
     
     // Check collisions
     if (checkCollisions(head, gameProgress.value.snake, gameProgress.value.walls, [], settings.value.gridSize)) {
+      soundManager.playSound('game_over')
       handleGameEnd()
       gameState.value = 'gameOver'
       return
@@ -442,6 +472,15 @@ const gameLoop = (): void => {
     if (eatenFoodIndex !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex]
       const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      
+      // Play appropriate food sound
+      if (eatenFood.type === 'golden') {
+        soundManager.playSound('eat_golden_food')
+      } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(eatenFood.type)) {
+        soundManager.playSound('eat_special_food')
+      } else {
+        soundManager.playSound('eat_food')
+      }
       
       gameProgress.value.snake = updatedSnake
       gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
@@ -518,6 +557,16 @@ const gameLoop = (): void => {
     if (eatenFoodIndex1 !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex1]
       const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      
+      // Play appropriate food sound
+      if (eatenFood.type === 'golden') {
+        soundManager.playSound('eat_golden_food')
+      } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(eatenFood.type)) {
+        soundManager.playSound('eat_special_food')
+      } else {
+        soundManager.playSound('eat_food')
+      }
+      
       gameProgress.value.snake = updatedSnake
       gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
       
@@ -538,6 +587,16 @@ const gameLoop = (): void => {
     if (eatenFoodIndex2 !== -1 && eatenFoodIndex2 !== eatenFoodIndex1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex2]
       const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      
+      // Play appropriate food sound
+      if (eatenFood.type === 'golden') {
+        soundManager.playSound('eat_golden_food')
+      } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(eatenFood.type)) {
+        soundManager.playSound('eat_special_food')
+      } else {
+        soundManager.playSound('eat_food')
+      }
+      
       gameProgress.value.snake2 = updatedSnake
       gameProgress.value.score2 = Math.max(0, gameProgress.value.score2 + scoreChange)
       
@@ -590,8 +649,10 @@ const handleKeyPress = (e: KeyboardEvent): void => {
   if (e.key === ' ') {
     if (gameState.value === 'playing') {
       gameState.value = 'paused'
+      soundManager.playSound('pause')
     } else if (gameState.value === 'paused') {
       gameState.value = 'playing'
+      soundManager.playSound('resume')
     }
     e.preventDefault() // Prevent page scrolling
     return
@@ -636,6 +697,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             gameProgress.value.bullets.push(bullet)
             gameProgress.value.bulletCount2-- // Use up one bullet
             bulletsFiredThisGame++ // Track bullets fired
+            soundManager.playSound('bullet_fire')
             e.preventDefault()
             return
           } else {
@@ -670,6 +732,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             gameProgress.value.bullets.push(bullet)
             gameProgress.value.bulletCount-- // Use up one bullet
             bulletsFiredThisGame++ // Track bullets fired
+            soundManager.playSound('bullet_fire')
             e.preventDefault()
             return
           } else {
@@ -705,6 +768,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         gameProgress.value.snake = newSnake
         gameProgress.value.teleportCooldown = TELEPORT_COOLDOWN
         teleportsUsedThisGame++ // Track teleports used
+        soundManager.playSound('teleport')
         e.preventDefault()
       } else if ((e.key === 'r' || e.key === 'R') && gameProgress.value.teleportCooldown === 0) {
         // Directional teleport for player 1
@@ -718,6 +782,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
         gameProgress.value.snake[0] = teleportPosition
         gameProgress.value.teleportCooldown = TELEPORT_COOLDOWN
         teleportsUsedThisGame++ // Track teleports used
+        soundManager.playSound('teleport')
         e.preventDefault()
       }
       
@@ -734,6 +799,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           gameProgress.value.snake2 = newSnake2
           gameProgress.value.teleportCooldown2 = TELEPORT_COOLDOWN
           teleportsUsedThisGame++ // Track teleports used
+          soundManager.playSound('teleport')
           e.preventDefault()
         } else if ((e.key === 'x' || e.key === 'X') && gameProgress.value.teleportCooldown2 === 0) {
           // Directional teleport for player 2
@@ -747,6 +813,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           gameProgress.value.snake2[0] = teleportPosition
           gameProgress.value.teleportCooldown2 = TELEPORT_COOLDOWN
           teleportsUsedThisGame++ // Track teleports used
+          soundManager.playSound('teleport')
           e.preventDefault()
         }
       }
@@ -762,9 +829,10 @@ const saveHighScore = (): void => {
 }
 
 // Watch for game state changes
-watch(gameState, (newState: GameState) => {
+watch(gameState, (newState: GameState, oldState: GameState) => {
   if (newState === 'playing') {
     gameLoopRef = setInterval(gameLoop, SPEEDS[settings.value.speed])
+    soundManager.playMusic('gameplay')
   } else {
     if (gameLoopRef) {
       clearInterval(gameLoopRef)
@@ -779,6 +847,13 @@ watch(gameState, (newState: GameState) => {
   
   if (newState === 'gameOver') {
     saveHighScore()
+    soundManager.playMusic('game_over')
+  } else if (newState === 'menu') {
+    soundManager.playMusic('menu')
+  } else if (newState === 'paused') {
+    soundManager.pauseMusic()
+  } else if (oldState === 'paused' && newState === 'playing') {
+    soundManager.resumeMusic()
   }
 })
 
@@ -794,6 +869,17 @@ watch(() => settings.value.speed, (newSpeed) => {
 onMounted(() => {
   window.addEventListener('keydown', handleKeyPress)
   highScores.value = loadHighScores()
+  
+  // Initialize sound manager settings
+  soundManager.updateSettings({
+    soundEnabled: settings.value.soundEnabled,
+    musicEnabled: settings.value.musicEnabled,
+    soundVolume: settings.value.soundVolume,
+    musicVolume: settings.value.musicVolume
+  })
+  
+  // Start with menu music
+  soundManager.playMusic('menu')
 })
 
 onUnmounted(() => {
