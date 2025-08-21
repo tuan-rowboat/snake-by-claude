@@ -39,6 +39,8 @@
       :teleport-cooldown2="gameProgress.teleportCooldown2"
       :bullet-count="gameProgress.bulletCount"
       :bullet-count2="gameProgress.bulletCount2"
+      :magnet-count="gameProgress.magnetCount"
+      :magnet-count2="gameProgress.magnetCount2"
     />
     
     <!-- Game Over Screen -->
@@ -114,7 +116,7 @@ import { ref, onMounted, onUnmounted, watch, computed, type Ref } from 'vue'
 import type { GameState, GameMode, GameSettings, GameProgress, Position, Direction, Food } from './types/game'
 import type { Achievement, UnlockableReward } from './types/progression'
 import { SPEEDS, WALL_PATTERNS, FOOD_TYPES, TELEPORT_COOLDOWN } from './utils/constants'
-import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions } from './utils/gameLogic'
+import { generateRandomWalls, generateMovingWalls, moveWalls, generateFood, checkCollisions, updateSnakeWithFood, moveSnake, isValidDirection, executeRandomTeleport, executeDirectionalTeleport, createBullet, moveBullets, checkBulletWallCollisions, checkBulletSnakeCollisions, collectNearbyFoods } from './utils/gameLogic'
 import { loadHighScores, updateHighScores } from './utils/storage'
 import { ProgressionSystem } from './utils/progressionSystem'
 import { SoundManager } from './utils/soundManager'
@@ -164,7 +166,9 @@ const gameProgress: Ref<GameProgress> = ref({
   teleportCooldown: 0,
   teleportCooldown2: 0,
   bulletCount: 0,
-  bulletCount2: 0
+  bulletCount2: 0,
+  magnetCount: 0,
+  magnetCount2: 0
 })
 
 const highScores: Ref<number[]> = ref([])
@@ -337,6 +341,10 @@ const startGame = (): void => {
   gameProgress.value.bulletCount = 0
   gameProgress.value.bulletCount2 = 0
   gameProgress.value.bullets = []
+  
+  // Reset magnet counts
+  gameProgress.value.magnetCount = 0
+  gameProgress.value.magnetCount2 = 0
   
   // Set walls based on pattern
   let newWalls: Position[] = []
@@ -522,7 +530,7 @@ const gameLoop = (): void => {
     const eatenFoodIndex = gameProgress.value.foods.findIndex(food => food.x === head.x && food.y === head.y)
     if (eatenFoodIndex !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex]
-      const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       // Play appropriate food sound
       if (eatenFood.type === 'golden') {
@@ -542,6 +550,11 @@ const gameLoop = (): void => {
       // Add bullets if bullet food was eaten
       if (bulletCount > 0) {
         gameProgress.value.bulletCount += bulletCount
+      }
+      
+      // Add magnets if magnet food was eaten
+      if (magnetCount > 0) {
+        gameProgress.value.magnetCount += magnetCount
       }
       
       // Remove eaten food and generate new one
@@ -617,7 +630,7 @@ const gameLoop = (): void => {
     
     if (eatenFoodIndex1 !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex1]
-      const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       // Play appropriate food sound
       if (eatenFood.type === 'golden') {
@@ -639,6 +652,11 @@ const gameLoop = (): void => {
         gameProgress.value.bulletCount += bulletCount
       }
       
+      // Add magnets if magnet food was eaten
+      if (magnetCount > 0) {
+        gameProgress.value.magnetCount += magnetCount
+      }
+      
       foodsToRemove.push(eatenFoodIndex1)
     } else {
       newSnake1.pop()
@@ -647,7 +665,7 @@ const gameLoop = (): void => {
     
     if (eatenFoodIndex2 !== -1 && eatenFoodIndex2 !== eatenFoodIndex1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex2]
-      const { newSnake: updatedSnake, scoreChange, bulletCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       // Play appropriate food sound
       if (eatenFood.type === 'golden') {
@@ -667,6 +685,11 @@ const gameLoop = (): void => {
       // Add bullets if bullet food was eaten
       if (bulletCount > 0) {
         gameProgress.value.bulletCount2 += bulletCount
+      }
+      
+      // Add magnets if magnet food was eaten
+      if (magnetCount > 0) {
+        gameProgress.value.magnetCount2 += magnetCount
       }
       
       foodsToRemove.push(eatenFoodIndex2)
@@ -878,6 +901,174 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           e.preventDefault()
         }
       }
+    }
+    
+    // Magnet controls
+    if (e.key === 'm' || e.key === 'M') {
+      if (gameMode.value === 'multiplayer') {
+        // In multiplayer, M activates magnet for player 1, N for player 2
+        if (gameProgress.value.magnetCount > 0) {
+          const { collectedFoods, remainingFoods } = collectNearbyFoods(
+            gameProgress.value.snake[0], 
+            gameProgress.value.foods, 
+            3
+          )
+          
+          if (collectedFoods.length > 0) {
+            // Process each collected food
+            for (const food of collectedFoods) {
+              const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
+                gameProgress.value.snake, 
+                food.type, 
+                FOOD_TYPES[food.type].points
+              )
+              gameProgress.value.snake = updatedSnake
+              gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
+              
+              if (bulletCount > 0) {
+                gameProgress.value.bulletCount += bulletCount
+              }
+              if (magnetCount > 0) {
+                gameProgress.value.magnetCount += magnetCount
+              }
+              
+              // Play appropriate food sound
+              if (food.type === 'golden') {
+                soundManager.playSound('eat_golden_food')
+              } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(food.type)) {
+                soundManager.playSound('eat_special_food')
+              } else {
+                soundManager.playSound('eat_food')
+              }
+            }
+            
+            gameProgress.value.foods = remainingFoods
+            gameProgress.value.magnetCount-- // Use up one magnet charge
+            soundManager.playSound('magnet_activate')
+            
+            // Generate new foods to maintain max count
+            while (gameProgress.value.foods.length < settings.value.maxFoods) {
+              gameProgress.value.foods.push(generateFood(
+                gameProgress.value.snake,
+                gameProgress.value.foods,
+                gameProgress.value.walls,
+                gameProgress.value.snake2,
+                settings.value.gridSize
+              ))
+            }
+          }
+        }
+      } else {
+        // Single player mode
+        if (gameProgress.value.magnetCount > 0) {
+          const { collectedFoods, remainingFoods } = collectNearbyFoods(
+            gameProgress.value.snake[0], 
+            gameProgress.value.foods, 
+            3
+          )
+          
+          if (collectedFoods.length > 0) {
+            // Process each collected food
+            for (const food of collectedFoods) {
+              const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
+                gameProgress.value.snake, 
+                food.type, 
+                FOOD_TYPES[food.type].points
+              )
+              gameProgress.value.snake = updatedSnake
+              gameProgress.value.score = Math.max(0, gameProgress.value.score + scoreChange)
+              
+              if (bulletCount > 0) {
+                gameProgress.value.bulletCount += bulletCount
+              }
+              if (magnetCount > 0) {
+                gameProgress.value.magnetCount += magnetCount
+              }
+              
+              // Play appropriate food sound
+              if (food.type === 'golden') {
+                soundManager.playSound('eat_golden_food')
+              } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(food.type)) {
+                soundManager.playSound('eat_special_food')
+              } else {
+                soundManager.playSound('eat_food')
+              }
+            }
+            
+            gameProgress.value.foods = remainingFoods
+            gameProgress.value.magnetCount-- // Use up one magnet charge
+            soundManager.playSound('magnet_activate')
+            
+            // Generate new foods to maintain max count
+            while (gameProgress.value.foods.length < settings.value.maxFoods) {
+              gameProgress.value.foods.push(generateFood(
+                gameProgress.value.snake,
+                gameProgress.value.foods,
+                gameProgress.value.walls,
+                [],
+                settings.value.gridSize
+              ))
+            }
+          }
+        }
+      }
+      e.preventDefault()
+    }
+    
+    // Magnet controls for player 2 in multiplayer
+    if ((e.key === 'n' || e.key === 'N') && gameMode.value === 'multiplayer') {
+      if (gameProgress.value.magnetCount2 > 0) {
+        const { collectedFoods, remainingFoods } = collectNearbyFoods(
+          gameProgress.value.snake2[0], 
+          gameProgress.value.foods, 
+          3
+        )
+        
+        if (collectedFoods.length > 0) {
+          // Process each collected food
+          for (const food of collectedFoods) {
+            const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
+              gameProgress.value.snake2, 
+              food.type, 
+              FOOD_TYPES[food.type].points
+            )
+            gameProgress.value.snake2 = updatedSnake
+            gameProgress.value.score2 = Math.max(0, gameProgress.value.score2 + scoreChange)
+            
+            if (bulletCount > 0) {
+              gameProgress.value.bulletCount2 += bulletCount
+            }
+            if (magnetCount > 0) {
+              gameProgress.value.magnetCount2 += magnetCount
+            }
+            
+            // Play appropriate food sound
+            if (food.type === 'golden') {
+              soundManager.playSound('eat_golden_food')
+            } else if (['super', 'banana', 'cherry', 'watermelon', 'mushroom'].includes(food.type)) {
+              soundManager.playSound('eat_special_food')
+            } else {
+              soundManager.playSound('eat_food')
+            }
+          }
+          
+          gameProgress.value.foods = remainingFoods
+          gameProgress.value.magnetCount2-- // Use up one magnet charge
+          soundManager.playSound('magnet_activate')
+          
+          // Generate new foods to maintain max count
+          while (gameProgress.value.foods.length < settings.value.maxFoods) {
+            gameProgress.value.foods.push(generateFood(
+              gameProgress.value.snake,
+              gameProgress.value.foods,
+              gameProgress.value.walls,
+              gameProgress.value.snake2,
+              settings.value.gridSize
+            ))
+          }
+        }
+      }
+      e.preventDefault()
     }
   }
 }

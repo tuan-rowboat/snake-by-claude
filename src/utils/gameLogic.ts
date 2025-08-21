@@ -239,7 +239,7 @@ export const updateSnakeWithFood = (
   snake: Position[], 
   foodType: FoodType, 
   points: number
-): { newSnake: Position[], scoreChange: number, bulletCount: number } => {
+): { newSnake: Position[], scoreChange: number, bulletCount: number, magnetCount: number } => {
   const newSnake = [...snake]
   const foodProps = FOOD_TYPES[foodType]
   
@@ -250,19 +250,25 @@ export const updateSnakeWithFood = (
       const lastSegment = newSnake[newSnake.length - 1]
       newSnake.push({ ...lastSegment })
     }
-    return { newSnake, scoreChange: points, bulletCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
   } else if (foodProps.effect === 'shrink') {
     // Reduce snake length by 2 (poison effect)
     if (newSnake.length > 3) { // Keep minimum length of 3
       newSnake.pop()
       newSnake.pop()
     }
-    return { newSnake, scoreChange: points, bulletCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
   } else if (foodProps.effect === 'bullet') {
     // Bullet food - grants 5 bullets
     const lastSegment = newSnake[newSnake.length - 1]
     newSnake.push({ ...lastSegment })
-    return { newSnake, scoreChange: points, bulletCount: 5 }
+    return { newSnake, scoreChange: points, bulletCount: 5, magnetCount: 0 }
+  } else if (foodProps.effect === 'magnet') {
+    // Magnet food - grants 1-5 magnet charges
+    const magnetCharges = Math.floor(Math.random() * 5) + 1 // 1-5
+    const lastSegment = newSnake[newSnake.length - 1]
+    newSnake.push({ ...lastSegment })
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: magnetCharges }
   } else if (foodProps.effect === 'randomGrow') {
     // Growth Potion - randomly add 1-3 segments
     const randomGrowth = Math.floor(Math.random() * 3) + 1 // 1-3
@@ -270,7 +276,7 @@ export const updateSnakeWithFood = (
     for (let i = 0; i < randomGrowth; i++) {
       newSnake.push({ ...lastSegment })
     }
-    return { newSnake, scoreChange: points + randomGrowth * 5, bulletCount: 0 } // Bonus points for growth
+    return { newSnake, scoreChange: points + randomGrowth * 5, bulletCount: 0, magnetCount: 0 } // Bonus points for growth
   } else if (foodProps.effect === 'randomShrink') {
     // Shrink Pill - randomly remove 1-3 segments
     const randomShrink = Math.floor(Math.random() * 3) + 1 // 1-3
@@ -278,7 +284,7 @@ export const updateSnakeWithFood = (
     for (let i = 0; i < randomShrink && newSnake.length > minLength; i++) {
       newSnake.pop()
     }
-    return { newSnake, scoreChange: points, bulletCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
   } else {
     // Normal food - grow snake by adding a segment
     const lastSegment = newSnake[newSnake.length - 1]
@@ -287,10 +293,10 @@ export const updateSnakeWithFood = (
     // Golden apple grows by 2 segments
     if (foodType === 'golden') {
       newSnake.push({ ...lastSegment })
-      return { newSnake, scoreChange: points * 2, bulletCount: 0 } // Double points for golden apple
+      return { newSnake, scoreChange: points * 2, bulletCount: 0, magnetCount: 0 } // Double points for golden apple
     }
     
-    return { newSnake, scoreChange: points, bulletCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
   }
 }
 
@@ -505,4 +511,31 @@ export const checkBulletSnakeCollisions = (bullets: Bullet[], snake: Position[],
   }
 
   return { remainingBullets, snakeHit, otherSnakeHit }
+}
+
+export const findNearbyFoods = (snakeHead: Position, foods: Food[], range: number = 3): Food[] => {
+  return foods.filter(food => {
+    const distance = Math.abs(food.x - snakeHead.x) + Math.abs(food.y - snakeHead.y)
+    return distance <= range
+  })
+}
+
+export const collectNearbyFoods = (
+  snakeHead: Position, 
+  foods: Food[], 
+  range: number = 3
+): { collectedFoods: Food[], remainingFoods: Food[] } => {
+  const collectedFoods: Food[] = []
+  const remainingFoods: Food[] = []
+  
+  for (const food of foods) {
+    const distance = Math.abs(food.x - snakeHead.x) + Math.abs(food.y - snakeHead.y)
+    if (distance <= range) {
+      collectedFoods.push(food)
+    } else {
+      remainingFoods.push(food)
+    }
+  }
+  
+  return { collectedFoods, remainingFoods }
 }

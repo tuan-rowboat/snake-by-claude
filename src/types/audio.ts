@@ -11,6 +11,7 @@ export type SoundEffect =
   | 'button_click'
   | 'pause'
   | 'resume'
+  | 'magnet_activate'
 
 export type BackgroundMusic = 
   | 'menu'

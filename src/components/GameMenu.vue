@@ -89,14 +89,14 @@
           
           <div>
             <label class="block text-xs font-medium mb-1">Foods</label>
-            <div class="flex gap-1">
+            <div class="flex flex-wrap gap-1">
               <button
-                v-for="num in [1, 2, 3, 4, 5]"
+                v-for="num in [5, 10, 20, 30, 50]"
                 :key="num"
                 @click="updateSettings('maxFoods', num)"
                 :data-testid="`max-foods-${num}`"
                 :class="[
-                  'flex-1 py-1 rounded text-xs font-medium transition-all',
+                  'min-w-0 flex-1 py-1 px-1 rounded text-xs font-medium transition-all',
                   settings.maxFoods === num ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
                 ]"
               >
@@ -456,8 +456,11 @@
         <div class="text-xs space-y-0.5">
           <div v-if="gameMode === 'single'">Arrow/WASD</div>
           <div v-if="gameMode === 'multiplayer'">
-            <div class="text-green-400">P1: Arrows</div>
-            <div class="text-blue-400">P2: WASD</div>
+            <div class="text-green-400">P1: Arrows, M</div>
+            <div class="text-blue-400">P2: WASD, N</div>
+          </div>
+          <div v-if="gameMode === 'single'">
+            <div class="text-red-400">M: Magnet</div>
           </div>
           <div class="text-yellow-300">SPACE: Pause</div>
         </div>
@@ -473,6 +476,7 @@
           </div>
           <div class="mt-1 space-y-0.5">
             <div>🍄 +2 🔥 Bullets</div>
+            <div>🧲 1-5 Magnets</div>
             <div>☠️ -2 💊 -1~3</div>
           </div>
         </div>

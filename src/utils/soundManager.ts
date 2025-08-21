@@ -50,7 +50,8 @@ export class SoundManager {
       { id: 'level_up', volume: 0.5 },
       { id: 'button_click', volume: 0.2 },
       { id: 'pause', volume: 0.3 },
-      { id: 'resume', volume: 0.3 }
+      { id: 'resume', volume: 0.3 },
+      { id: 'magnet_activate', volume: 0.4 }
     ]
 
     soundConfigs.forEach(config => {
@@ -164,6 +165,11 @@ export class SoundManager {
         break
       case 'resume':
         this.playTone(600, 0.1, 'sine', 0.3)
+        break
+      case 'magnet_activate':
+        this.playTone(300, 0.1, 'sine', 0.3)
+        setTimeout(() => this.playTone(500, 0.1, 'sine', 0.3), 50)
+        setTimeout(() => this.playTone(700, 0.15, 'sine', 0.4), 100)
         break
     }
   }
