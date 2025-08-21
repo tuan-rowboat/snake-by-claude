@@ -7,6 +7,7 @@
         <div class="text-xl font-bold">Score: <span class="text-green-400 text-2xl">{{ score }}</span></div>
         <div v-if="bulletCount && bulletCount > 0" class="text-lg font-bold text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }} (Press S to shoot)</div>
         <div v-if="magnetCount && magnetCount > 0" class="text-lg font-bold text-red-400 animate-pulse">🧲 Magnets: {{ magnetCount }} (Press M to use)</div>
+        <div v-if="artilleryCount && artilleryCount > 0" class="text-lg font-bold text-yellow-400 animate-pulse">💣 Artillery: {{ artilleryCount }} (Press A to fire)</div>
       </div>
       
       <div v-if="gameMode === 'multiplayer'" class="mb-4 flex gap-8 items-center">
@@ -14,11 +15,13 @@
           Player 1: <span class="text-green-400 text-xl">{{ score }}</span>
           <div v-if="bulletCount && bulletCount > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount }}</div>
           <div v-if="magnetCount && magnetCount > 0" class="text-sm text-red-400 animate-pulse">🧲 Magnets: {{ magnetCount }} (M)</div>
+          <div v-if="artilleryCount && artilleryCount > 0" class="text-sm text-yellow-400 animate-pulse">💣 Artillery: {{ artilleryCount }} (A)</div>
         </div>
         <div class="text-lg font-bold">
           Player 2: <span class="text-blue-400 text-xl">{{ score2 }}</span>
           <div v-if="bulletCount2 && bulletCount2 > 0" class="text-sm text-orange-400 animate-pulse">🔥 Bullets: {{ bulletCount2 }}</div>
           <div v-if="magnetCount2 && magnetCount2 > 0" class="text-sm text-red-400 animate-pulse">🧲 Magnets: {{ magnetCount2 }} (N)</div>
+          <div v-if="artilleryCount2 && artilleryCount2 > 0" class="text-sm text-yellow-400 animate-pulse">💣 Artillery: {{ artilleryCount2 }} (Z)</div>
         </div>
       </div>
 
@@ -130,6 +133,8 @@ interface Props {
   bulletCount2?: number
   magnetCount?: number
   magnetCount2?: number
+  artilleryCount?: number
+  artilleryCount2?: number
 }
 
 const props = defineProps<Props>()

@@ -20,7 +20,7 @@ export const getGameSize = (gridSize: number) => ({
 
 // Food types with their properties
 export const FOOD_TYPES: Record<FoodType, FoodProperties> = {
-  apple: { color: '#ff0000', points: 10, spawnRate: 0.23, shape: 'circle', emoji: '🍎' },
+  apple: { color: '#ff0000', points: 10, spawnRate: 0.19, shape: 'circle', emoji: '🍎' },
   golden: { color: '#ffd700', points: 50, spawnRate: 0.05, shape: 'star', emoji: '⭐' },
   berry: { color: '#9932cc', points: 20, spawnRate: 0.13, shape: 'circle', emoji: '🫐' },
   super: { color: '#ff69b4', points: 100, spawnRate: 0.03, shape: 'diamond', emoji: '💎' },
@@ -32,7 +32,8 @@ export const FOOD_TYPES: Record<FoodType, FoodProperties> = {
   bullet: { color: '#ff6600', points: 20, spawnRate: 0.05, shape: 'diamond', emoji: '🔥', effect: 'bullet' },
   growth: { color: '#00ffaa', points: 15, spawnRate: 0.05, shape: 'circle', emoji: '🧪', effect: 'randomGrow' },
   shrink: { color: '#ff00aa', points: -5, spawnRate: 0.05, shape: 'circle', emoji: '💊', effect: 'randomShrink' },
-  magnet: { color: '#c0392b', points: 10, spawnRate: 0.08, shape: 'diamond', emoji: '🧲', effect: 'magnet' }
+  magnet: { color: '#c0392b', points: 10, spawnRate: 0.08, shape: 'diamond', emoji: '🧲', effect: 'magnet' },
+  artillery: { color: '#8b4513', points: 25, spawnRate: 0.04, shape: 'square', emoji: '💣', effect: 'artillery' }
 }
 
 // Wall patterns

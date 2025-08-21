@@ -239,7 +239,7 @@ export const updateSnakeWithFood = (
   snake: Position[], 
   foodType: FoodType, 
   points: number
-): { newSnake: Position[], scoreChange: number, bulletCount: number, magnetCount: number } => {
+): { newSnake: Position[], scoreChange: number, bulletCount: number, magnetCount: number, artilleryCount: number } => {
   const newSnake = [...snake]
   const foodProps = FOOD_TYPES[foodType]
   
@@ -250,25 +250,31 @@ export const updateSnakeWithFood = (
       const lastSegment = newSnake[newSnake.length - 1]
       newSnake.push({ ...lastSegment })
     }
-    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0, artilleryCount: 0 }
   } else if (foodProps.effect === 'shrink') {
     // Reduce snake length by 2 (poison effect)
     if (newSnake.length > 3) { // Keep minimum length of 3
       newSnake.pop()
       newSnake.pop()
     }
-    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0, artilleryCount: 0 }
   } else if (foodProps.effect === 'bullet') {
     // Bullet food - grants 5 bullets
     const lastSegment = newSnake[newSnake.length - 1]
     newSnake.push({ ...lastSegment })
-    return { newSnake, scoreChange: points, bulletCount: 5, magnetCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 5, magnetCount: 0, artilleryCount: 0 }
   } else if (foodProps.effect === 'magnet') {
     // Magnet food - grants 1-5 magnet charges
     const magnetCharges = Math.floor(Math.random() * 5) + 1 // 1-5
     const lastSegment = newSnake[newSnake.length - 1]
     newSnake.push({ ...lastSegment })
-    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: magnetCharges }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: magnetCharges, artilleryCount: 0 }
+  } else if (foodProps.effect === 'artillery') {
+    // Artillery food - grants 1-3 artillery shells
+    const artilleryShells = Math.floor(Math.random() * 3) + 1 // 1-3
+    const lastSegment = newSnake[newSnake.length - 1]
+    newSnake.push({ ...lastSegment })
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0, artilleryCount: artilleryShells }
   } else if (foodProps.effect === 'randomGrow') {
     // Growth Potion - randomly add 1-3 segments
     const randomGrowth = Math.floor(Math.random() * 3) + 1 // 1-3
@@ -276,7 +282,7 @@ export const updateSnakeWithFood = (
     for (let i = 0; i < randomGrowth; i++) {
       newSnake.push({ ...lastSegment })
     }
-    return { newSnake, scoreChange: points + randomGrowth * 5, bulletCount: 0, magnetCount: 0 } // Bonus points for growth
+    return { newSnake, scoreChange: points + randomGrowth * 5, bulletCount: 0, magnetCount: 0, artilleryCount: 0 } // Bonus points for growth
   } else if (foodProps.effect === 'randomShrink') {
     // Shrink Pill - randomly remove 1-3 segments
     const randomShrink = Math.floor(Math.random() * 3) + 1 // 1-3
@@ -284,7 +290,7 @@ export const updateSnakeWithFood = (
     for (let i = 0; i < randomShrink && newSnake.length > minLength; i++) {
       newSnake.pop()
     }
-    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0, artilleryCount: 0 }
   } else {
     // Normal food - grow snake by adding a segment
     const lastSegment = newSnake[newSnake.length - 1]
@@ -293,10 +299,10 @@ export const updateSnakeWithFood = (
     // Golden apple grows by 2 segments
     if (foodType === 'golden') {
       newSnake.push({ ...lastSegment })
-      return { newSnake, scoreChange: points * 2, bulletCount: 0, magnetCount: 0 } // Double points for golden apple
+      return { newSnake, scoreChange: points * 2, bulletCount: 0, magnetCount: 0, artilleryCount: 0 } // Double points for golden apple
     }
     
-    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0 }
+    return { newSnake, scoreChange: points, bulletCount: 0, magnetCount: 0, artilleryCount: 0 }
   }
 }
 
@@ -434,12 +440,13 @@ export const executeDirectionalTeleport = (
   return head
 }
 
-export const createBullet = (snakeHead: Position, direction: Direction, playerId: 1 | 2): Bullet => {
+export const createBullet = (snakeHead: Position, direction: Direction, playerId: 1 | 2, isArtillery?: boolean): Bullet => {
   return {
     x: snakeHead.x + direction.x,
     y: snakeHead.y + direction.y,
     direction,
-    playerId
+    playerId,
+    isArtillery
   }
 }
 
@@ -456,6 +463,24 @@ export const moveBullets = (bullets: Bullet[], gridSize: number = DEFAULT_GRID_S
     )
 }
 
+export const createArtilleryExplosion = (center: Position, radius: number = 2): Position[] => {
+  const explosionArea: Position[] = []
+  
+  for (let x = center.x - radius; x <= center.x + radius; x++) {
+    for (let y = center.y - radius; y <= center.y + radius; y++) {
+      // Calculate distance from center
+      const distance = Math.sqrt(Math.pow(x - center.x, 2) + Math.pow(y - center.y, 2))
+      
+      // Include positions within the explosion radius
+      if (distance <= radius) {
+        explosionArea.push({ x, y })
+      }
+    }
+  }
+  
+  return explosionArea
+}
+
 export const checkBulletWallCollisions = (bullets: Bullet[], walls: Position[]): { 
   remainingBullets: Bullet[], 
   destroyedWalls: Position[] 
@@ -468,9 +493,24 @@ export const checkBulletWallCollisions = (bullets: Bullet[], walls: Position[]):
     const wallIndex = remainingWalls.findIndex(wall => wall.x === bullet.x && wall.y === bullet.y)
     
     if (wallIndex !== -1) {
-      // Bullet hits wall - destroy the wall and the bullet
-      destroyedWalls.push(remainingWalls[wallIndex])
-      remainingWalls.splice(wallIndex, 1)
+      if (bullet.isArtillery) {
+        // Artillery creates explosion area - destroy multiple walls
+        const explosionArea = createArtilleryExplosion({ x: bullet.x, y: bullet.y }, 2)
+        
+        for (const explosionPos of explosionArea) {
+          const explodedWallIndex = remainingWalls.findIndex(wall => 
+            wall.x === explosionPos.x && wall.y === explosionPos.y
+          )
+          if (explodedWallIndex !== -1) {
+            destroyedWalls.push(remainingWalls[explodedWallIndex])
+            remainingWalls.splice(explodedWallIndex, 1)
+          }
+        }
+      } else {
+        // Normal bullet hits wall - destroy only the hit wall
+        destroyedWalls.push(remainingWalls[wallIndex])
+        remainingWalls.splice(wallIndex, 1)
+      }
     } else {
       // Bullet doesn't hit wall - keep it
       remainingBullets.push(bullet)
@@ -492,16 +532,40 @@ export const checkBulletSnakeCollisions = (bullets: Bullet[], snake: Position[],
   for (const bullet of bullets) {
     let hitSomething = false
     
-    // Check collision with main snake
-    if (snake.some(segment => segment.x === bullet.x && segment.y === bullet.y)) {
-      snakeHit = true
-      hitSomething = true
-    }
-    
-    // Check collision with other snake
-    if (otherSnake.some(segment => segment.x === bullet.x && segment.y === bullet.y)) {
-      otherSnakeHit = true
-      hitSomething = true
+    if (bullet.isArtillery) {
+      // Artillery creates explosion area - check if any snake segments are in blast radius
+      const explosionArea = createArtilleryExplosion({ x: bullet.x, y: bullet.y }, 2)
+      
+      // Check if explosion area hits main snake (only if bullet was not fired by player 1)
+      if (bullet.playerId !== 1 && snake.some(segment => 
+        explosionArea.some(explosionPos => 
+          explosionPos.x === segment.x && explosionPos.y === segment.y
+        )
+      )) {
+        snakeHit = true
+        hitSomething = true
+      }
+      
+      // Check if explosion area hits other snake (only if bullet was not fired by player 2)
+      if (bullet.playerId !== 2 && otherSnake.some(segment => 
+        explosionArea.some(explosionPos => 
+          explosionPos.x === segment.x && explosionPos.y === segment.y
+        )
+      )) {
+        otherSnakeHit = true
+        hitSomething = true
+      }
+    } else {
+      // Normal bullet - check direct collision (exclude firing snake)
+      if (bullet.playerId !== 1 && snake.some(segment => segment.x === bullet.x && segment.y === bullet.y)) {
+        snakeHit = true
+        hitSomething = true
+      }
+      
+      if (bullet.playerId !== 2 && otherSnake.some(segment => segment.x === bullet.x && segment.y === bullet.y)) {
+        otherSnakeHit = true
+        hitSomething = true
+      }
     }
     
     // Only keep bullet if it didn't hit anything
@@ -551,19 +615,35 @@ export const checkBulletFoodCollisions = (bullets: Bullet[], foods: Food[]): {
   
   // Check each bullet for collisions with foods
   for (const bullet of bullets) {
-    const bulletPos = `${bullet.x},${bullet.y}`
-    const hitFood = foods.find(food => `${food.x},${food.y}` === bulletPos)
+    let hitSomething = false
     
-    if (hitFood) {
-      eatenFoods.push({ food: hitFood, bullet })
+    if (bullet.isArtillery) {
+      // Artillery bullets only destroy food if they directly hit it, but don't explode
+      // Artillery should only explode when hitting walls or snakes, not food
+      const directHitFood = foods.find(food => food.x === bullet.x && food.y === bullet.y)
+      
+      if (directHitFood) {
+        eatenFoods.push({ food: directHitFood, bullet })
+        // Artillery continues flying after eating food (doesn't explode)
+      }
     } else {
+      // Normal bullet - check direct collision
+      const hitFood = foods.find(food => food.x === bullet.x && food.y === bullet.y)
+      
+      if (hitFood) {
+        eatenFoods.push({ food: hitFood, bullet })
+        hitSomething = true
+      }
+    }
+    
+    // Only keep bullet if it didn't hit anything
+    if (!hitSomething) {
       remainingBullets.push(bullet)
     }
   }
   
   // Check each food - only keep foods that weren't hit
   for (const food of foods) {
-    const foodPos = `${food.x},${food.y}`
     const wasHit = eatenFoods.some(eaten => eaten.food === food)
     
     if (!wasHit) {

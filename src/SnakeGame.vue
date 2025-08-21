@@ -41,6 +41,8 @@
       :bullet-count2="gameProgress.bulletCount2"
       :magnet-count="gameProgress.magnetCount"
       :magnet-count2="gameProgress.magnetCount2"
+      :artillery-count="gameProgress.artilleryCount"
+      :artillery-count2="gameProgress.artilleryCount2"
     />
     
     <!-- Game Over Screen -->
@@ -168,7 +170,9 @@ const gameProgress: Ref<GameProgress> = ref({
   bulletCount: 0,
   bulletCount2: 0,
   magnetCount: 0,
-  magnetCount2: 0
+  magnetCount2: 0,
+  artilleryCount: 0,
+  artilleryCount2: 0
 })
 
 const highScores: Ref<number[]> = ref([])
@@ -346,6 +350,10 @@ const startGame = (): void => {
   gameProgress.value.magnetCount = 0
   gameProgress.value.magnetCount2 = 0
   
+  // Reset artillery counts
+  gameProgress.value.artilleryCount = 0
+  gameProgress.value.artilleryCount2 = 0
+  
   // Set walls based on pattern
   let newWalls: Position[] = []
   if (settings.value.wallPattern === 'random') {
@@ -467,6 +475,7 @@ const gameLoop = (): void => {
     let totalScoreP1 = 0, totalScoreP2 = 0
     let totalBulletCountP1 = 0, totalBulletCountP2 = 0
     let totalMagnetCountP1 = 0, totalMagnetCountP2 = 0
+    let totalArtilleryCountP1 = 0, totalArtilleryCountP2 = 0
     
     // Process each eaten food and track which bullet hit it
     for (const { food, bullet } of eatenFoods) {
@@ -480,6 +489,8 @@ const gameLoop = (): void => {
           totalBulletCountP1 += 5
         } else if (foodProps.effect === 'magnet') {
           totalMagnetCountP1 += Math.floor(Math.random() * 5) + 1 // 1-5 magnets
+        } else if (foodProps.effect === 'artillery') {
+          totalArtilleryCountP1 += Math.floor(Math.random() * 3) + 1 // 1-3 artillery
         }
       } else {
         totalScoreP2 += foodProps.points
@@ -487,6 +498,8 @@ const gameLoop = (): void => {
           totalBulletCountP2 += 5
         } else if (foodProps.effect === 'magnet') {
           totalMagnetCountP2 += Math.floor(Math.random() * 5) + 1 // 1-5 magnets
+        } else if (foodProps.effect === 'artillery') {
+          totalArtilleryCountP2 += Math.floor(Math.random() * 3) + 1 // 1-3 artillery
         }
       }
       
@@ -504,11 +517,13 @@ const gameLoop = (): void => {
     gameProgress.value.score += totalScoreP1
     gameProgress.value.bulletCount += totalBulletCountP1
     gameProgress.value.magnetCount += totalMagnetCountP1
+    gameProgress.value.artilleryCount += totalArtilleryCountP1
     
     if (gameMode.value === 'multiplayer') {
       gameProgress.value.score2 += totalScoreP2
       gameProgress.value.bulletCount2 += totalBulletCountP2
       gameProgress.value.magnetCount2 += totalMagnetCountP2
+      gameProgress.value.artilleryCount2 += totalArtilleryCountP2
     }
     
     // Generate new foods to replace eaten ones
@@ -596,7 +611,7 @@ const gameLoop = (): void => {
     const eatenFoodIndex = gameProgress.value.foods.findIndex(food => food.x === head.x && food.y === head.y)
     if (eatenFoodIndex !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex]
-      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount, artilleryCount } = updateSnakeWithFood(newSnake, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       // Play appropriate food sound
       if (eatenFood.type === 'golden') {
@@ -621,6 +636,9 @@ const gameLoop = (): void => {
       // Add magnets if magnet food was eaten
       if (magnetCount > 0) {
         gameProgress.value.magnetCount += magnetCount
+      }
+      if (artilleryCount > 0) {
+        gameProgress.value.artilleryCount += artilleryCount
       }
       
       // Remove eaten food and generate new one
@@ -696,7 +714,7 @@ const gameLoop = (): void => {
     
     if (eatenFoodIndex1 !== -1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex1]
-      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount, artilleryCount } = updateSnakeWithFood(newSnake1, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       // Play appropriate food sound
       if (eatenFood.type === 'golden') {
@@ -722,6 +740,9 @@ const gameLoop = (): void => {
       if (magnetCount > 0) {
         gameProgress.value.magnetCount += magnetCount
       }
+      if (artilleryCount > 0) {
+        gameProgress.value.artilleryCount += artilleryCount
+      }
       
       foodsToRemove.push(eatenFoodIndex1)
     } else {
@@ -731,7 +752,7 @@ const gameLoop = (): void => {
     
     if (eatenFoodIndex2 !== -1 && eatenFoodIndex2 !== eatenFoodIndex1) {
       const eatenFood = gameProgress.value.foods[eatenFoodIndex2]
-      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
+      const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount, artilleryCount } = updateSnakeWithFood(newSnake2, eatenFood.type, FOOD_TYPES[eatenFood.type].points)
       
       // Play appropriate food sound
       if (eatenFood.type === 'golden') {
@@ -756,6 +777,11 @@ const gameLoop = (): void => {
       // Add magnets if magnet food was eaten
       if (magnetCount > 0) {
         gameProgress.value.magnetCount2 += magnetCount
+      }
+      
+      // Add artillery if artillery food was eaten
+      if (artilleryCount > 0) {
+        gameProgress.value.artilleryCount2 += artilleryCount
       }
       
       foodsToRemove.push(eatenFoodIndex2)
@@ -867,6 +893,16 @@ const handleKeyPress = (e: KeyboardEvent): void => {
       if (isValidDirection(gameProgress.value.direction2, newDirection2)) {
         gameProgress.value.direction2 = newDirection2
       }
+      
+      // Player 2 artillery control (Z key)
+      if ((e.key === 'z' || e.key === 'Z') && gameProgress.value.artilleryCount2 > 0) {
+        const artilleryShell = createBullet(gameProgress.value.snake2[0], gameProgress.value.direction2, 2, true)
+        gameProgress.value.bullets.push(artilleryShell)
+        gameProgress.value.artilleryCount2-- // Use up one artillery shell
+        soundManager.playSound('bullet_fire') // Use bullet sound for now
+        e.preventDefault()
+        return
+      }
     } else {
       // Single player mode - also allow WASD for player 1
       switch (e.key) {
@@ -891,7 +927,17 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           break
         case 'a':
         case 'A':
-          newDirection = { x: -1, y: 0 }
+          // Check if snake has artillery - if so, fire artillery instead of moving
+          if (gameProgress.value.artilleryCount > 0) {
+            const artilleryShell = createBullet(gameProgress.value.snake[0], gameProgress.value.direction, 1, true)
+            gameProgress.value.bullets.push(artilleryShell)
+            gameProgress.value.artilleryCount-- // Use up one artillery shell
+            soundManager.playSound('bullet_fire') // Use bullet sound for now
+            e.preventDefault()
+            return
+          } else {
+            newDirection = { x: -1, y: 0 }
+          }
           break
         case 'd':
         case 'D':
@@ -989,7 +1035,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             
             // Process each collected food
             for (const food of collectedFoods) {
-              const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
+              const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount, artilleryCount } = updateSnakeWithFood(
                 gameProgress.value.snake, 
                 food.type, 
                 FOOD_TYPES[food.type].points
@@ -1002,6 +1048,9 @@ const handleKeyPress = (e: KeyboardEvent): void => {
               }
               if (magnetCount > 0) {
                 gameProgress.value.magnetCount += magnetCount
+              }
+              if (artilleryCount > 0) {
+                gameProgress.value.artilleryCount += artilleryCount
               }
               
               // Play appropriate food sound
@@ -1048,7 +1097,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             
             // Process each collected food
             for (const food of collectedFoods) {
-              const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
+              const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount, artilleryCount } = updateSnakeWithFood(
                 gameProgress.value.snake, 
                 food.type, 
                 FOOD_TYPES[food.type].points
@@ -1061,6 +1110,9 @@ const handleKeyPress = (e: KeyboardEvent): void => {
               }
               if (magnetCount > 0) {
                 gameProgress.value.magnetCount += magnetCount
+              }
+              if (artilleryCount > 0) {
+                gameProgress.value.artilleryCount += artilleryCount
               }
               
               // Play appropriate food sound
@@ -1111,7 +1163,7 @@ const handleKeyPress = (e: KeyboardEvent): void => {
           
           // Process each collected food
           for (const food of collectedFoods) {
-            const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount } = updateSnakeWithFood(
+            const { newSnake: updatedSnake, scoreChange, bulletCount, magnetCount, artilleryCount } = updateSnakeWithFood(
               gameProgress.value.snake2, 
               food.type, 
               FOOD_TYPES[food.type].points
@@ -1124,6 +1176,9 @@ const handleKeyPress = (e: KeyboardEvent): void => {
             }
             if (magnetCount > 0) {
               gameProgress.value.magnetCount2 += magnetCount
+            }
+            if (artilleryCount > 0) {
+              gameProgress.value.artilleryCount2 += artilleryCount
             }
             
             // Play appropriate food sound

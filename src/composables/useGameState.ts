@@ -21,7 +21,11 @@ export function useGameState() {
     teleportCooldown: 0,
     teleportCooldown2: 0,
     bulletCount: 0,
-    bulletCount2: 0
+    bulletCount2: 0,
+    magnetCount: 0,
+    magnetCount2: 0,
+    artilleryCount: 0,
+    artilleryCount2: 0
   })
 
   const isGameActive = computed(() => 
@@ -50,7 +54,11 @@ export function useGameState() {
       teleportCooldown: 0,
       teleportCooldown2: 0,
       bulletCount: 0,
-      bulletCount2: 0
+      bulletCount2: 0,
+      magnetCount: 0,
+      magnetCount2: 0,
+      artilleryCount: 0,
+      artilleryCount2: 0
     }
   }
 

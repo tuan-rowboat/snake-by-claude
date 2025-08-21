@@ -15,7 +15,7 @@ export interface Food extends Position {
   scale?: number // For pulsing animation
 }
 
-export type FoodType = 'apple' | 'golden' | 'berry' | 'super' | 'banana' | 'cherry' | 'watermelon' | 'mushroom' | 'poison' | 'bullet' | 'growth' | 'shrink' | 'magnet'
+export type FoodType = 'apple' | 'golden' | 'berry' | 'super' | 'banana' | 'cherry' | 'watermelon' | 'mushroom' | 'poison' | 'bullet' | 'growth' | 'shrink' | 'magnet' | 'artillery'
 
 export interface FoodProperties {
   color: string
@@ -23,7 +23,7 @@ export interface FoodProperties {
   spawnRate: number
   shape: ShapeType
   emoji: string
-  effect?: 'double' | 'shrink' | 'bullet' | 'randomGrow' | 'randomShrink' | 'magnet'
+  effect?: 'double' | 'shrink' | 'bullet' | 'randomGrow' | 'randomShrink' | 'magnet' | 'artillery'
 }
 
 export type ShapeType = 'circle' | 'triangle' | 'diamond' | 'star' | 'rectangle' | 'square'
@@ -62,6 +62,7 @@ export interface GameSettings {
 export interface Bullet extends Position {
   direction: Direction
   playerId: 1 | 2
+  isArtillery?: boolean
 }
 
 export interface GameProgress {
@@ -82,6 +83,8 @@ export interface GameProgress {
   bulletCount2: number
   magnetCount: number
   magnetCount2: number
+  artilleryCount: number
+  artilleryCount2: number
 }
 
 import type { Bot } from './bot'
